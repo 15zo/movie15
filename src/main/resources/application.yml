@@ -4,7 +4,7 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${URL}
+    url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
 
@@ -21,6 +21,11 @@ spring:
       hibernate:
         format_sql: true
         enable_lazy_load_no_trans: true
+
+jwt:
+  #jwt.secret=8Fh3#T!s9@5mN&2QpV*Zy$w6LrXc1^kJb4Uz+Ao
+  secret: ${JWT_SECRET_KEY}
+  expiry-millis: 1800000  # 30분
 
 cloud:
   aws:
