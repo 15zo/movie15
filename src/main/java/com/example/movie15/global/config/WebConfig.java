@@ -29,7 +29,7 @@ public class WebConfig {
     private final AuthenticationProvider authenticationProvider;
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
-    private static final String[] WHITE_LIST = {"/users/signup", "/users/login", "/users/refresh", "/error"};
+    private static final String[] WHITE_LIST = {"api/users/signup", "api/users/login", "api/users/refresh", "api/error"};
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
