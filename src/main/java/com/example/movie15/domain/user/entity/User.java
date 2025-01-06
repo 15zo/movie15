@@ -2,6 +2,10 @@ package com.example.movie15.domain.user.entity;
 
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,24 +29,41 @@ public class User extends BaseEntity {
 
     @Column(nullable = false, length = 10)
     @Enumerated(value = EnumType.STRING)
-    private Role role;  //역할: 어드민, 유저
+    private Role role = Role.USER;  // 기본값: USER
 
     private boolean isDeleted = false;
 
-    public User(String email, String password, String nickname, String role) {
+    // 회원가입용 생성자
+    public User(String email, String password, String nickname) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.role = Role.of(role);
+    }
+
+    // 관리자 생성용 생성자
+    public User(String email, String password, String nickname, Role role) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.role = role;
     }
 
     public void updateIsDeleted() {
+
         this.isDeleted = true;
     }
 
     public void updatePassword(String newPassword) {
+
         this.password = newPassword;
     }
 
+    public void updateNickname(String newNickname) {
+        this.nickname = newNickname;
+    }
+
+    public void changeRole(Role newRole) {
+        this.role = newRole;
+    }
 
 }
