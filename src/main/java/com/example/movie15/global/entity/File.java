@@ -1,29 +1,33 @@
 package com.example.movie15.global.entity;
 
+import com.example.movie15.global.model.FileExtension;
+import com.example.movie15.global.model.FileType;
+
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 public class File extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 255)
-    private String url;
+    private Long id; // 파일 고유 식별자
 
     @Column(nullable = false)
-    private Long size;
+    private String url; // 파일 URL
 
-    @Column(nullable = false, length = 10)
-    private String extension;
+    @Column(nullable = false)
+    private Integer size; // 파일 크기
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private FileExtension extension; // 파일 확장자
 
     @Column(nullable = false, length = 255)
-    private String name;
+    private String name; // 파일 이름
 
-    @Column(nullable = false, length = 30)
-    private String type;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private FileType type; // 파일 유형
 }

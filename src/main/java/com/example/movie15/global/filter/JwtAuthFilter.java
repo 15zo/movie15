@@ -1,4 +1,4 @@
-package com.example.movie15.global.config.filter;
+package com.example.movie15.global.filter;
 
 import com.example.movie15.global.security.AuthenticationScheme;
 import com.example.movie15.global.security.JwtProvider;
