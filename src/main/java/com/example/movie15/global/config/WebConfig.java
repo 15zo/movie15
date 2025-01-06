@@ -1,6 +1,6 @@
 package com.example.movie15.global.config;
 
-import com.example.movie15.global.config.filter.JwtAuthFilter;
+import com.example.movie15.global.filter.JwtAuthFilter;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
