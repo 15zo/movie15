@@ -23,7 +23,14 @@ public class ReviewService {
     private final UserRepository userRepository;
     //private final MovieRepository movieRepository;
 
-    // 리뷰생성
+    /**
+     * 리뷰를 생성.
+     * 사용자가 특정 영화에 대한 리뷰를 작성할 때 호출.
+     *
+     * @param loginUserId 로그인한 사용자의 ID
+     * @param movieId     영화 ID (영화 정보는 추후 MovieRepository 연동 후 처리 예정)
+     * @param dto         리뷰 요청 DTO
+     */
     @Transactional
     public void createReview(Long loginUserId, Long movieId, ReviewRequestDto dto) {
         // user 조회
@@ -46,7 +53,13 @@ public class ReviewService {
 //        reviewRepository.save(review);
     }
 
-    // 본인리뷰조회
+    /**
+     * 로그인한 사용자의 리뷰 목록을 조회.
+     * 해당 사용자가 작성한 리뷰를 조회할 때 호출.
+     *
+     * @param loginUserId 로그인한 사용자의 ID
+     * @return 사용자가 작성한 리뷰 목록
+     */
     public List<ReviewResponseDto> findReviews(Long loginUserId) {
 
         return reviewRepository.findAllByUserIdWithMovie(loginUserId)
@@ -60,7 +73,14 @@ public class ReviewService {
     }
 
     // TODO : 에러타입 수정
-    // 리뷰수정
+    /**
+     * 리뷰를 수정.
+     * 사용자가 본인이 작성한 리뷰를 수정할 때 호출.
+     *
+     * @param reviewId   수정할 리뷰의 ID
+     * @param loginUserId 로그인한 사용자의 ID
+     * @param dto        수정된 리뷰 정보
+     */
     @Transactional
     public void updateReview(Long reviewId, Long loginUserId, ReviewRequestDto dto) {
         Review review = reviewRepository.findById(reviewId)
@@ -75,7 +95,13 @@ public class ReviewService {
         review.updateReview(dto.getComment(), dto.getRating());
     }
 
-    // 리뷰삭제
+    /**
+     * 리뷰를 삭제.
+     * 사용자가 본인이 작성한 리뷰를 삭제할 때 호출.
+     *
+     * @param loginUserId 로그인한 사용자의 ID
+     * @param reviewId    삭제할 리뷰의 ID
+     */
     @Transactional
     public void deleteReview(Long loginUserId, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
