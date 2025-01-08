@@ -2,6 +2,8 @@ package com.example.movie15.domain.movie.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,11 +82,9 @@ public class MovieService {
 		}
 	}
 
-	public List<MovieResponseDto> findAllMovies() {
+	public Page<MovieResponseDto> findAllMovies(Pageable pageable) {
 
-		List<Movie> movies = movieRepository.findAll();
-
-		return movies.stream().map(this::convertToMovieResponseDto).toList();
+		return movieRepository.findAllMoviesWithPagination(pageable);
 	}
 
 	private MovieResponseDto convertToMovieResponseDto(Movie movie) {

@@ -1,13 +1,16 @@
 package com.example.movie15.domain.movie.controller;
 
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +18,6 @@ import com.example.movie15.domain.movie.dto.MovieDetailsResponseDto;
 import com.example.movie15.domain.movie.dto.MovieResponseDto;
 import com.example.movie15.domain.movie.entity.Movie;
 import com.example.movie15.domain.movie.service.MovieService;
-
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -38,8 +40,18 @@ public class MovieController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<MovieResponseDto>> findAllMovies() {
-		List<MovieResponseDto> movies = movieService.findAllMovies();
+	public ResponseEntity<Page<MovieResponseDto>> findAllMovies(@RequestParam(defaultValue = "0") int page,
+																@RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<MovieResponseDto> movies = movieService.findAllMovies(pageable);
+		return ResponseEntity.status(HttpStatus.OK).body(movies);
+	}
+
+	@GetMapping
+	public ResponseEntity<Page<MovieResponseDto>> findAllMoviesFilter(@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<MovieResponseDto> movies = movieService.findAllMovies(pageable);
 		return ResponseEntity.status(HttpStatus.OK).body(movies);
 	}
 
