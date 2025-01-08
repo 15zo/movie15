@@ -1,4 +1,4 @@
-package com.example.movie15.domain.email.entity;
+package com.example.movie15.domain.email.model;
 
 import lombok.Getter;
 import lombok.Setter;

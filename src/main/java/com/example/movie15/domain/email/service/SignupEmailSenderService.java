@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class SignupSenderService {
+public class SignupEmailSenderService {
 
     private final JavaMailSender mailSender;
 

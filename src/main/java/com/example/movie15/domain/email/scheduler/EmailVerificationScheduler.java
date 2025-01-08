@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 // 1분마다 만료된유저 지우는 클래스
-public class VerificationScheduler { // 자동으로 호출되는 클래스. @Scheduled 로 시간설정.
+public class EmailVerificationScheduler { // 자동으로 호출되는 클래스. @Scheduled 로 시간설정.
 
     private final UserRepository userRepository;
 

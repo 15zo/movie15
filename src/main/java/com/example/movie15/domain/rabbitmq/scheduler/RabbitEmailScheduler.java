@@ -1,6 +1,5 @@
-package com.example.movie15.domain.email.scheduler;
+package com.example.movie15.domain.rabbitmq.scheduler;
 
-import com.example.movie15.domain.email.entity.EmailMessage;
 import lombok.RequiredArgsConstructor;
 import org.joda.time.LocalDateTime;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -9,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EmailScheduler {
+public class RabbitEmailScheduler {
 
     //private final MovieReservationRepository reservationRepository;
     private final RabbitTemplate rabbitTemplate;  // RabbitTemplate 을 사용하여 메시지를 보냄
