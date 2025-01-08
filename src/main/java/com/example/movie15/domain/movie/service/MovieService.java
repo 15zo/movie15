@@ -87,12 +87,17 @@ public class MovieService {
 		return movieRepository.findAllMoviesWithPagination(pageable);
 	}
 
+	public Page<MovieResponseDto> searchMovies(String title, String genre, Pageable pageable) {
+		Page<Movie> movies = movieRepository.searchMovies(title,genre,pageable);
+		return movies.map(this::convertToMovieResponseDto);
+	}
+
 	private MovieResponseDto convertToMovieResponseDto(Movie movie) {
 		return new MovieResponseDto(
 			movie.getId(),
 			movie.getTitle(),
 			movie.getProductionYear(),
-			movie.getCategory(),
+			movie.getGenre(),
 			movie.getMoviePosterUrl(),
 			movie.getDuration()
 		);
@@ -118,7 +123,7 @@ public class MovieService {
 		dto.setRelease_date(movie.getProductionYear());
 		dto.setRuntime(movie.getDuration());
 		dto.setStatus(movie.getStatus());
-		dto.setGenres(movie.getCategory());
+		dto.setGenres(movie.getGenre());
 		dto.setPoster_path(movie.getMoviePosterUrl());
 		dto.setTrailerUrl(movie.getTrailerUrl());
 		return dto;
@@ -128,4 +133,6 @@ public class MovieService {
 		movieRepository.findByIdOrElseThrow(movieId);
 		movieRepository.deleteById(movieId);
 	}
+
+
 }

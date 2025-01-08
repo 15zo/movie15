@@ -40,6 +40,22 @@ cloud:
     stack:
       auto: false
 
+  # Mail
+  mail:
+    host: smtp.gmail.com # SMTP 서버 호스트 Gmail 사용
+    port: 587 # SMTP 서버 포트
+    username: ${MAIL_ACCOUNT}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp # 메일 전송 프로토콜
+    properties:
+      mail:
+        smtp:
+          auth: true # SMTP 서버 인증 활성화
+          starttls:
+            enable: true # TLS 암호화 활성화
+        debug: true # 디버그 모드 활성화 (로그 출력)
+
 tmdb:
   api-key: ${MDB_API_KEY}
   base-url: "https://api.themoviedb.org/3"
+

@@ -17,6 +17,7 @@ import com.example.movie15.domain.movie.dto.MovieDetailsResponseDto;
 import com.example.movie15.domain.movie.dto.MovieResponseDto;
 import com.example.movie15.domain.movie.entity.Movie;
 import com.example.movie15.domain.movie.service.MovieService;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -52,6 +53,16 @@ public class MovieController {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<MovieResponseDto> movies = movieService.findAllMovies(pageable);
 		return ResponseEntity.status(HttpStatus.OK).body(movies);
+	}
+
+	@GetMapping("/search")
+	public ResponseEntity<Page<MovieResponseDto>> searchMovies(@RequestParam(required = false) String title,
+															   @RequestParam(required = false) String genre,
+															   @RequestParam(defaultValue = "0") int page,
+															   @RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<MovieResponseDto> moviePage = movieService.searchMovies(title, genre, pageable);
+		return ResponseEntity.ok(moviePage);
 	}
 
 	@GetMapping("/{movieId}")
