@@ -1,5 +1,7 @@
 package com.example.movie15.domain.review.service;
 
+import com.example.movie15.domain.movie.entity.Movie;
+import com.example.movie15.domain.movie.repository.MovieRepository;
 import com.example.movie15.domain.review.dto.ReviewRequestDto;
 import com.example.movie15.domain.review.dto.ReviewResponseDto;
 import com.example.movie15.domain.review.entity.Review;
@@ -21,7 +23,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
-    //private final MovieRepository movieRepository;
+    private final MovieRepository movieRepository;
 
     /**
      * 리뷰를 생성.
@@ -37,20 +39,19 @@ public class ReviewService {
         User user = userRepository.findById(loginUserId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
-        // TODO : movie 완성 후 테스트, ExceptionType 수정
-//        // movie 조회
-//        Movie movie = movieRepository.findById(movieId)
-//                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
-//
-//         review 객체 생성
-//        Review review = new Review(dto.getComment(), dto.getRating());
-//
-//        // 연관관계 편의메소드
+        // movie 조회
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+
+        // review 객체 생성
+        Review review = new Review(dto.getComment(), dto.getRating());
+
+        // 연관관계 편의메소드
 //        review.setUser(user);
 //        review.setMovie(movie);
 //
-//        // review 저장
-//        reviewRepository.save(review);
+        // review 저장
+        reviewRepository.save(review);
     }
 
     /**
@@ -73,13 +74,14 @@ public class ReviewService {
     }
 
     // TODO : 에러타입 수정
+
     /**
      * 리뷰를 수정.
      * 사용자가 본인이 작성한 리뷰를 수정할 때 호출.
      *
-     * @param reviewId   수정할 리뷰의 ID
+     * @param reviewId    수정할 리뷰의 ID
      * @param loginUserId 로그인한 사용자의 ID
-     * @param dto        수정된 리뷰 정보
+     * @param dto         수정된 리뷰 정보
      */
     @Transactional
     public void updateReview(Long reviewId, Long loginUserId, ReviewRequestDto dto) {
