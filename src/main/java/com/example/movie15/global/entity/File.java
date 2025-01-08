@@ -30,4 +30,10 @@ public class File extends BaseEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private FileType type; // 파일 유형
+
+    public File(String url, String name) {
+        this.url = url;
+        this.name = name;
+    }
+
 }
