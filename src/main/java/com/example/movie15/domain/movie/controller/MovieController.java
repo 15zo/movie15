@@ -1,6 +1,5 @@
 package com.example.movie15.domain.movie.controller;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,7 +48,7 @@ public class MovieController {
 
 	@GetMapping
 	public ResponseEntity<Page<MovieResponseDto>> findAllMoviesFilter(@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") int size) {
+																	  @RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<MovieResponseDto> movies = movieService.findAllMovies(pageable);
 		return ResponseEntity.status(HttpStatus.OK).body(movies);
