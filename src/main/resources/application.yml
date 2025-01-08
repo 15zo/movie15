@@ -39,3 +39,7 @@ cloud:
       auto: false
     stack:
       auto: false
+
+tmdb:
+  api-key: ${MDB_API_KEY}
+  base-url: "https://api.themoviedb.org/3"
