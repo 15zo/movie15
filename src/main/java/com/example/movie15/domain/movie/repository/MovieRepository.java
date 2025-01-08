@@ -20,7 +20,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 		return findById(movieId).orElseThrow(()-> new NotFoundException(ExceptionType.MOVIE_NOT_FOUND));
 	}
 
-	@Query("SELECT new com.example.movie15.domain.movie.dto.MovieResponseDto(m.id, m.title, m.productionYear, m.category, m.moviePosterUrl, m.duration) " +
+	@Query("SELECT new com.example.movie15.domain.movie.dto.MovieResponseDto(m.id, m.title, m.productionYear, m.genre, m.moviePosterUrl, m.duration) " +
 		"FROM Movie m")
 	Page<MovieResponseDto> findAllMoviesWithPagination(Pageable pageable);
 

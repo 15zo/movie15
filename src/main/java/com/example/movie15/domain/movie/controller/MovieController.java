@@ -47,14 +47,6 @@ public class MovieController {
 		return ResponseEntity.status(HttpStatus.OK).body(movies);
 	}
 
-	@GetMapping
-	public ResponseEntity<Page<MovieResponseDto>> findAllMoviesFilter(@RequestParam(defaultValue = "0") int page,
-																	  @RequestParam(defaultValue = "10") int size) {
-		Pageable pageable = PageRequest.of(page, size);
-		Page<MovieResponseDto> movies = movieService.findAllMovies(pageable);
-		return ResponseEntity.status(HttpStatus.OK).body(movies);
-	}
-
 	@GetMapping("/search")
 	public ResponseEntity<Page<MovieResponseDto>> searchMovies(@RequestParam(required = false) String title,
 															   @RequestParam(required = false) String genre,
