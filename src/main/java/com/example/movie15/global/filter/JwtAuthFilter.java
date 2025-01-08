@@ -18,6 +18,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+
+import static com.example.movie15.global.config.WebConfig.WHITE_LIST;
 
 @Component
 @RequiredArgsConstructor

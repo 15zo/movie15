@@ -30,7 +30,7 @@ public class WebConfig {
     private final AuthenticationProvider authenticationProvider;
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
-    private static final String[] WHITE_LIST = {"api/users/signup", "api/users/login", "api/users/refresh", "api/error"};
+    public static final String[] WHITE_LIST = {"api/users/signup", "api/users/login", "api/users/refresh", "api/error"};
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
@@ -65,6 +65,7 @@ public class WebConfig {
     // 사용자 권한의 계층을 설정
     @Bean
     public RoleHierarchy roleHierarchy() {
+
         return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_USER");
     }
 }

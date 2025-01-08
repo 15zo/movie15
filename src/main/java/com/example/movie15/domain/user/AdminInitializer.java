@@ -30,7 +30,7 @@ public class AdminInitializer {
                     adminEmail,
                     passwordEncoder.encode(adminPassword),
                     adminNickname,
-                    Role.ADIMIN
+                    Role.ADMIN
             );
             userRepository.save(admin);
             System.out.println("기본 관리자 계정이 생성되었습니다: " + adminEmail);
