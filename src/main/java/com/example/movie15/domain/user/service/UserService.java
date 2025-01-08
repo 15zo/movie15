@@ -1,6 +1,6 @@
 package com.example.movie15.domain.user.service;
 
-import com.example.movie15.domain.email.EmailService.EmailSenderService;
+import com.example.movie15.domain.email.service.SignupSenderService;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
 import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
@@ -31,7 +31,7 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
-    private final EmailSenderService emailSenderService;
+    private final SignupSenderService emailSenderService;
 
     @Transactional
     public void signup(UserRequestDto userRequestDto) throws MessagingException {

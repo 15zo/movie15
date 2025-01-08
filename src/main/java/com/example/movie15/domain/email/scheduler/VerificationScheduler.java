@@ -1,4 +1,4 @@
-package com.example.movie15.domain.email.EmailScheduler;
+package com.example.movie15.domain.email.scheduler;
 
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;

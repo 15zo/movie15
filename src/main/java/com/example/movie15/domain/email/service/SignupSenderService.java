@@ -1,4 +1,4 @@
-package com.example.movie15.domain.email.EmailService;
+package com.example.movie15.domain.email.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class EmailSenderService {
+public class SignupSenderService {
 
     private final JavaMailSender mailSender;
 
