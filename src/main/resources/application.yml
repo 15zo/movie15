@@ -54,3 +54,8 @@ cloud:
           starttls:
             enable: true # TLS 암호화 활성화
         debug: true # 디버그 모드 활성화 (로그 출력)
+
+tmdb:
+  api-key: ${MDB_API_KEY}
+  base-url: "https://api.themoviedb.org/3"
+
