@@ -51,7 +51,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String headerPrefix = AuthenticationScheme.generateType(AuthenticationScheme.BEARER);
         boolean tokenFound = StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix);
 
-        if(tokenFound) {
+        if (tokenFound) {
             return bearerToken.substring(headerPrefix.length());
         }
 

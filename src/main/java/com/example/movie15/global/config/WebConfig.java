@@ -57,8 +57,7 @@ public class WebConfig {
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                //.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-        .addFilterAfter(jwtAuthFilter, ExceptionTranslationFilter.class);
+                .addFilterAfter(jwtAuthFilter, ExceptionTranslationFilter.class);
 
         return http.build();
     }

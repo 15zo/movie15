@@ -23,7 +23,7 @@ spring:
         enable_lazy_load_no_trans: true
 
 jwt:
-  #jwt.secret=8Fh3#T!s9@5mN&2QpV*Zy$w6LrXc1^kJb4Uz+Ao
+  #jwt.secret=9c45cb4ce8095b6e3da6cd6925d4f94daefbed2ee70c276335e4c6d9974399a6ae7c47b85a02689c1df3aa2c97cf0bf0a2939d63885b3ddb23bf79f752ad7f3fdaea28ac008ed87d1e88a24ab4d50311ddfaa95ce3158b147d1724764dc0fffaa1af8e2c1c38142ca0d556ccbbe0504dabb25e56ee5023ca9b784b50b845046
   secret: ${JWT_SECRET_KEY}
   expiry-millis: 1800000  # 30분
 
