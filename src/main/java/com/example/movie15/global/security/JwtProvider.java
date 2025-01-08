@@ -84,8 +84,12 @@ public class JwtProvider {
     public boolean validToken(String token) throws JwtException {
         try {
             return !this.tokenExpired(token);
-        } catch (MalformedJwtException | ExpiredJwtException | UnsupportedJwtException e) {
-            // 로그 모니터링 추후 메세지 삽입(빨간줄이 신경 쓰이면 ERROR레벨 말고 WARN레벨로)
+        } catch (MalformedJwtException e) {
+            log.warn("잘못된 JWT 토큰입니다.: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            log.warn("JWT 토큰이 만료됐습니다.: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.warn("지원되지 않는 JWT 토큰입니다.: {}", e.getMessage());
         }
         return false;
     }
