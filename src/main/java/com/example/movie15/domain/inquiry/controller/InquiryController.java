@@ -27,12 +27,6 @@ public class InquiryController {
         return ResponseEntity.status(201).body(response);
     }
 
-    // 문의사항 단일 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<InquiryResponseDto> getInquiry(@PathVariable Long id) {
-        InquiryResponseDto response = inquiryService.getInquiry(id);
-        return ResponseEntity.ok(response);
-    }
 
     // 문의사항 페이징 조회
     @GetMapping("/user/{userId}")
