@@ -21,7 +21,7 @@ public class AdminInitializer {
     @PostConstruct
     public void initializeAdmin() {
         String adminEmail = "admin@naver.com";
-        String adminPassword = "asdf1234!";
+        String adminPassword = "Asdf1234!";
         String adminNickname = "Admin";
 
         if (userRepository.findByEmail(adminEmail).isEmpty()) {

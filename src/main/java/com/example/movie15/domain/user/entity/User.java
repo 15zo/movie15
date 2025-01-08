@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.joda.time.LocalDateTime;
 
 @Getter
 @Entity
@@ -32,6 +33,10 @@ public class User extends BaseEntity {
     private Role role = Role.USER;  // 기본값: USER
 
     private boolean isDeleted = false;
+
+    private boolean isVerified; // 이메일 인증 여부
+    private String verificationToken; // 이메일 인증 토큰
+    private LocalDateTime tokenExpiryTime; // 인증토큰 만료 시간
 
     // 회원가입용 생성자
     public User(String email, String password, String nickname) {
@@ -64,6 +69,21 @@ public class User extends BaseEntity {
 
     public void changeRole(Role newRole) {
         this.role = newRole;
+    }
+
+    // 이메일 인증여부
+    public void setVerified(boolean verified) {
+        this.isVerified = verified;
+    }
+
+    // 인증토큰 삽입
+    public void setVerificationToken(String token) {
+        this.verificationToken = token;
+    }
+
+    // 인증토큰 만료시간 생성 (회원가입요청시간 + 10분)
+    public void setTokenExpiryTime() {
+        this.tokenExpiryTime = LocalDateTime.now().plusMinutes(10);
     }
 
 }

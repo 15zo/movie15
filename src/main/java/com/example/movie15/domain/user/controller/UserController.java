@@ -5,6 +5,7 @@ import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.domain.user.service.UserService;
 import com.example.movie15.global.exception.CommonResponseBody;
 import com.example.movie15.global.security.service.UserDetailsImpl;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -24,10 +25,10 @@ public class UserController {
 
     // 회원가입
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
+    public ResponseEntity<String> signup(@Valid @RequestBody UserRequestDto userRequestDto) throws MessagingException {
         userService.signup(userRequestDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
+        return ResponseEntity.status(HttpStatus.CREATED).body("이메일을 확인해주세요!");
     }
 
     // 회원 정보 수정
