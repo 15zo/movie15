@@ -42,6 +42,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String username = this.jwtProvider.getUsername(token);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        setAuthentication(request, userDetails);
     }
 
     // request의 Authorization 헤더에서 토큰 값을 추출

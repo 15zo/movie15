@@ -17,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,7 +30,7 @@ public class WebConfig {
     private final AuthenticationProvider authenticationProvider;
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
-    private static final String[] WHITE_LIST = {"api/users/signup", "api/users/login", "api/users/refresh", "api/error"};
+    private static final String[] WHITE_LIST = {"api/users/signup", "api/users/login", "api/users/refresh", "api/error", "api/movies/**"};
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
@@ -56,7 +57,8 @@ public class WebConfig {
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                //.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterAfter(jwtAuthFilter, ExceptionTranslationFilter.class);
 
         return http.build();
     }
