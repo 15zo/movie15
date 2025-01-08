@@ -85,11 +85,11 @@ public class JwtProvider {
         try {
             return !this.tokenExpired(token);
         } catch (MalformedJwtException e) {
-            log.error("잘못된 JWT 토큰입니다.: {}", e.getMessage());
+            log.warn("잘못된 JWT 토큰입니다.: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            log.error("JWT 토큰이 만료됐습니다.: {}", e.getMessage());
+            log.warn("JWT 토큰이 만료됐습니다.: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("지원되지 않는 JWT 토큰입니다.: {}", e.getMessage());
+            log.warn("지원되지 않는 JWT 토큰입니다.: {}", e.getMessage());
         }
         return false;
     }
