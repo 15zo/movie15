@@ -24,7 +24,7 @@ public class Movie extends BaseEntity {
     private String productionYear; // 제작연도
 
     @Column(length = 30)
-    private String category; // 장르
+    private String genre; // 장르
 
     @Column(length = 10)
     private String status; // 상영 상태 (e.g., 'Released')
@@ -39,12 +39,12 @@ public class Movie extends BaseEntity {
     private Integer duration; // 상영 시간 (분)
 
     // 모든 필드를 초기화하는 생성자
-    public Movie(String title, String content, String productionYear, Integer duration, String category, String status, String moviePosterUrl) {
+    public Movie(String title, String content, String productionYear, Integer duration, String genre, String status, String moviePosterUrl) {
         this.title = title;
         this.content = content;
         this.productionYear = productionYear;
         this.duration = duration;
-        this.category = category;
+        this.genre = genre;
         this.status = status;
         this.moviePosterUrl = moviePosterUrl;
     }
