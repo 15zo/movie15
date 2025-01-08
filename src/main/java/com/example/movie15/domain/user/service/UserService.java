@@ -1,5 +1,6 @@
 package com.example.movie15.domain.user.service;
 
+import com.example.movie15.domain.email.EmailService.EmailSenderService;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
 import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
@@ -8,6 +9,7 @@ import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.global.security.AuthenticationScheme;
 import com.example.movie15.global.security.JwtProvider;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,9 +31,10 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+    private final EmailSenderService emailSenderService;
 
     @Transactional
-    public void signup(UserRequestDto userRequestDto) {
+    public void signup(UserRequestDto userRequestDto) throws MessagingException {
         boolean isExist = userRepository.existsByEmail(userRequestDto.getEmail());
 
         if (isExist) {
@@ -41,7 +44,17 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(userRequestDto.getPassword());
         userRequestDto.updatePassword(encodedPassword);
 
-        userRepository.save(userRequestDto.toEntity());
+        User user = userRequestDto.toEntity();
+
+        // <<초기값: 인증 미완료 상태.>> 인증안하고 로그인 시도시 이 변수값으로 로그인 못하게하면됨.
+        user.setVerified(false);
+
+        // <<이메일 보내기>> 이메일 인증 토큰 생성 및 설정.
+        String token = emailSenderService.sendVerificationEmail(user.getEmail()); // 이메일 전송 후 토큰반환받음.
+        user.setVerificationToken(token); // 발급된 토큰 user 에 설정
+        user.setTokenExpiryTime(); // 토큰 유효시간: 10분
+
+        userRepository.save(user);
     }
 
     @Transactional

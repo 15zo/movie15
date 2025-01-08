@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling // 스케줄러 활성화
 @EnableJpaAuditing
 public class Movie15Application {
 
