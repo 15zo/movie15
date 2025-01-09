@@ -1,5 +1,6 @@
 package com.example.movie15.domain.review.controller;
 
+import com.example.movie15.domain.review.dto.MovieReviewsResponseDto;
 import com.example.movie15.domain.review.dto.ReviewRequestDto;
 import com.example.movie15.domain.review.dto.ReviewResponseDto;
 import com.example.movie15.domain.review.service.ReviewService;
@@ -58,6 +59,19 @@ public class ReviewController {
         Long loginUserId = userDetails.getUser().getId();
 
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.findReviews(loginUserId));
+    }
+
+    /**
+     * 영화 ID에 해당하는 리뷰 목록을 조회.
+     *
+     * @param movieId 조회할 영화의 ID
+     * @return 영화에 대한 리뷰 목록을 포함하는 ResponseEntity. 영화에 대한 리뷰가 없으면 빈 리스트를 반환.
+     */
+    @GetMapping("/movies/{movieId}")
+    public ResponseEntity<List<MovieReviewsResponseDto>> findMovieReviews(@PathVariable Long movieId) {
+        List<MovieReviewsResponseDto> reviewList = reviewService.findMovieReviews(movieId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(reviewList);
     }
 
     /**
