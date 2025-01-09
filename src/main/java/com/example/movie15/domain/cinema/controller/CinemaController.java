@@ -38,4 +38,12 @@ public class CinemaController {
 		return ResponseEntity.status(HttpStatus.OK).body(updatedSinema);
 	}
 
+	@DeleteMapping("/{cinemaId}/halls/{hallId}")
+	public ResponseEntity<String> deleteHallFromCinema(@PathVariable Long cinemaId,
+		 													      @PathVariable Long hallId) {
+		cinemaService.deleteHallFromCinema(cinemaId,hallId);
+		return ResponseEntity.status(HttpStatus.OK).body("삭제 되었습니다.");
+	}
+
+
 }

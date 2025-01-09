@@ -2,6 +2,7 @@ package com.example.movie15.domain.cinema.service;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.movie15.domain.cinema.dto.CinemaRequestDto;
 import com.example.movie15.domain.cinema.dto.CinemaResponseDto;
@@ -10,6 +11,8 @@ import com.example.movie15.domain.cinema.entity.CinemaHall;
 import com.example.movie15.domain.cinema.entity.Hall;
 import com.example.movie15.domain.cinema.repository.CinemaRepository;
 import com.example.movie15.domain.cinema.repository.HallRepository;
+import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +32,7 @@ public class CinemaService {
 	}
 
 	public CinemaResponseDto addHallsToCinema(Long cinemaId, List<Long> hallIds) {
-		Cinema cinema = cinemaRepository.findByIdOrElseTheow(cinemaId);
+		Cinema cinema = cinemaRepository.findByIdOrElseThrow(cinemaId);
 
 		List<Hall> halls = hallRepository.findAllByIdOrElseThrow(hallIds);
 //		중복 방지 및 관계 생성
@@ -43,5 +46,14 @@ public class CinemaService {
 	Cinema updatedCinema = cinemaRepository.save(cinema);
 
 	return CinemaResponseDto.toDto(updatedCinema);
+	}
+	@Transactional
+	public void deleteHallFromCinema(Long cinemaId, Long hallId) {
+		if(!cinemaRepository.existsRelation(cinemaId, hallId)){
+			throw new NotFoundException(ExceptionType.HALL_OR_CINEMA_NOT_FOUND);
+		}
+		cinemaRepository.findByIdOrElseThrow(cinemaId);
+		hallRepository.findByIdOrElseThrow(hallId);
+		cinemaRepository.deleteRelation(cinemaId, hallId);
 	}
 }

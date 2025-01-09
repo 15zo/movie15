@@ -24,4 +24,8 @@ public interface HallRepository extends JpaRepository<Hall, Long> {
 		}
 		return halls;
 	}
+
+	default void findByIdOrElseThrow(Long hallId){
+		findById(hallId).orElseThrow(() ->new NotFoundException(ExceptionType.HALL_NOT_FOUND));
+	}
 }
