@@ -40,6 +40,12 @@ cloud:
     stack:
       auto: false
 
+payment:
+  toss:
+    secretKey: test_sk_PBal2vxj81jQ4g5GoEPk35RQgOAN
+    clientKey: test_ck_ALnQvDd2VJ2l5kawRB4vVMj7X41m
+    successUrl: "http://localhost:8080/api/v1/payments/toss/success"
+    failUrl: "http://localhost:8080/api/v1/payments/toss/fail"
   # Mail
   mail:
     host: smtp.gmail.com # SMTP 서버 호스트 Gmail 사용
@@ -58,4 +64,3 @@ cloud:
 tmdb:
   api-key: ${MDB_API_KEY}
   base-url: "https://api.themoviedb.org/3"
-
