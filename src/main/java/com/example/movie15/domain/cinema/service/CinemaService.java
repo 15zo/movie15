@@ -1,6 +1,8 @@
 package com.example.movie15.domain.cinema.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,5 +57,14 @@ public class CinemaService {
 		cinemaRepository.findByIdOrElseThrow(cinemaId);
 		hallRepository.findByIdOrElseThrow(hallId);
 		cinemaRepository.deleteRelation(cinemaId, hallId);
+	}
+
+	public List<String> findByLocationWithCinemas(String location) {
+
+		return cinemaRepository.findByLocation(location);
+	}
+
+	public CinemaResponseDto findByCinema(Long cinemaId) {
+		return CinemaResponseDto.toDto(cinemaRepository.findByIdOrElseThrow(cinemaId));
 	}
 }
