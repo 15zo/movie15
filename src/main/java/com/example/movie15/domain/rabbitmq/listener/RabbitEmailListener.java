@@ -18,4 +18,16 @@ public class RabbitEmailListener {
         // 큐에서 받은 이메일 메시지 처리
         emailService.sendEmail(emailMessage.getUserEmail(), emailMessage.getSubject(), emailMessage.getText());
     }
+
+    // 결제 큐에서 메시지를 받는 리스너
+    @RabbitListener(queues = "chargeQueue")
+    public void chargeEmailMessage(EmailMessage emailMessage) {
+        emailService.sendEmail(emailMessage.getUserEmail(), emailMessage.getSubject(), emailMessage.getText());
+    }
+
+    // 결제취소 큐에서 메시지를 받는 리스너
+    @RabbitListener(queues = "cancelQueue")
+    public void cancelEmailMessage(EmailMessage emailMessage) {
+        emailService.sendEmail(emailMessage.getUserEmail(), emailMessage.getSubject(), emailMessage.getText());
+    }
 }
