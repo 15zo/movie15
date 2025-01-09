@@ -2,8 +2,13 @@ package com.example.movie15.domain.user.entity;
 
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.joda.time.LocalDateTime;
 
 @Getter
 @Entity
@@ -25,24 +30,60 @@ public class User extends BaseEntity {
 
     @Column(nullable = false, length = 10)
     @Enumerated(value = EnumType.STRING)
-    private Role role;  //역할: 어드민, 유저
+    private Role role = Role.USER;  // 기본값: USER
 
     private boolean isDeleted = false;
 
-    public User(String email, String password, String nickname, String role) {
+    private boolean isVerified; // 이메일 인증 여부
+    private String verificationToken; // 이메일 인증 토큰
+    private LocalDateTime tokenExpiryTime; // 인증토큰 만료 시간
+
+    // 회원가입용 생성자
+    public User(String email, String password, String nickname) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.role = Role.of(role);
+    }
+
+    // 관리자 생성용 생성자
+    public User(String email, String password, String nickname, Role role) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.role = role;
     }
 
     public void updateIsDeleted() {
+
         this.isDeleted = true;
     }
 
     public void updatePassword(String newPassword) {
+
         this.password = newPassword;
     }
 
+    public void updateNickname(String newNickname) {
+        this.nickname = newNickname;
+    }
+
+    public void changeRole(Role newRole) {
+        this.role = newRole;
+    }
+
+    // 이메일 인증여부
+    public void setVerified(boolean verified) {
+        this.isVerified = verified;
+    }
+
+    // 인증토큰 삽입
+    public void setVerificationToken(String token) {
+        this.verificationToken = token;
+    }
+
+    // 인증토큰 만료시간 생성 (회원가입요청시간 + 10분)
+    public void setTokenExpiryTime() {
+        this.tokenExpiryTime = LocalDateTime.now().plusMinutes(10);
+    }
 
 }

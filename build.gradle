@@ -51,12 +51,19 @@ dependencies {
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
+	// JWT
+	compileOnly 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
 	// junit
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	// jsonObject
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
+	//AWS S3
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 }
 
 tasks.named('test') {

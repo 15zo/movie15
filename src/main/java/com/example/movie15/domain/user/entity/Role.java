@@ -8,11 +8,12 @@ import java.util.List;
 @Getter
 public enum Role {
     USER("user"),
-    ADIMIN("admin");
+    ADMIN("admin");
 
     private final String name;
 
     Role(String name) {
+
         this.name = name;
     }
 

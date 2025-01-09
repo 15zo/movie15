@@ -3,43 +3,54 @@ package com.example.movie15.domain.movie.entity;
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
-
-import java.time.LocalDateTime;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@NoArgsConstructor
 public class Movie extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 영화 고유 식별자
-
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private MovieCategory category; // 영화 카테고리
+    private Long id; // 영화 고유 식별자 (DB 내부 ID)
 
     @Column(nullable = false, length = 255)
     private String title; // 영화 제목
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content; // 줄거리
 
     @Column(name = "prd_year", length = 10)
     private String productionYear; // 제작연도
 
-    @Column(length = 255)
-    private String supervision; // 감독
-
-    @Column(length = 255)
-    private String company; // 제작사
-
-    @Column(columnDefinition = "TEXT")
-    private String audit; // 심의 정보
+    @Column(length = 30)
+    private String genre; // 장르
 
     @Column(length = 10)
-    private String status; // 상영 상태 (e.g., 'Now Showing', 'Upcoming')
+    private String status; // 상영 상태 (e.g., 'Released')
 
-    @OneToOne
-    @JoinColumn(name = "movie_poster_id")
-    private MoviePoster moviePoster;
+    @Column
+    private String moviePosterUrl; // 영화 포스터
+
+    @Column
+    private String trailerUrl;
+
+    @Column
+    private Integer duration; // 상영 시간 (분)
+
+    // 모든 필드를 초기화하는 생성자
+    public Movie(String title, String content, String productionYear, Integer duration, String genre, String status, String moviePosterUrl) {
+        this.title = title;
+        this.content = content;
+        this.productionYear = productionYear;
+        this.duration = duration;
+        this.genre = genre;
+        this.status = status;
+        this.moviePosterUrl = moviePosterUrl;
+    }
+
+    public void setTrailerUrl(String trailerUrl) {
+        this.trailerUrl = trailerUrl;
+    }
+
 }
