@@ -15,7 +15,7 @@ import static jakarta.persistence.FetchType.LAZY;
 public class Booking {
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long Id;
+    private Long id;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus;
@@ -26,5 +26,22 @@ public class Booking {
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeatList = new ArrayList<>();
 
+    public void updateBookingStatus(BookingStatus bookingStatus, Payment payment) {
 
+        switch (bookingStatus) {
+            case COMPLETED -> {
+                this.bookingStatus = BookingStatus.COMPLETED;
+                this.payment = payment;
+            }
+        }
+    }
+
+    public Booking() {
+    }
+
+    public Booking(BookingStatus bookingStatus, Payment payment, List<BookingSeat> bookingSeatList) {
+        this.bookingStatus = bookingStatus;
+        this.payment = payment;
+        this.bookingSeatList = bookingSeatList;
+    }
 }
