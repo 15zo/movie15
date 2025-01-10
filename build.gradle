@@ -59,8 +59,15 @@ dependencies {
 	// junit
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	// jsonObject
+	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
 	//AWS S3
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+	//flyway
+	implementation 'org.flywaydb:flyway-core:9.22.0'
+	implementation 'org.flywaydb:flyway-mysql:9.22.0'
 }
 
 tasks.named('test') {
