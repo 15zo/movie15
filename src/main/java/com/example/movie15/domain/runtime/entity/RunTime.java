@@ -1,9 +1,10 @@
-package com.example.movie15.domain.movie.entity;
+package com.example.movie15.domain.runtime.entity;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 import com.example.movie15.domain.cinema.entity.Hall;
+import com.example.movie15.domain.movie.entity.Movie;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,4 +39,11 @@ public class RunTime {
 	@Column(nullable = false)
 	private LocalDate date; // 상영 날짜
 
+	public RunTime(Hall hall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime) {
+		this.hall = hall;
+		this.movie = movie;
+		this.date = date;
+		this.startTime = startTime;
+		this.endTime = endTime;
+	}
 }

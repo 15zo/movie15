@@ -3,7 +3,7 @@ package com.example.movie15.domain.cinema.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.movie15.domain.movie.entity.RunTime;
+import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.global.entity.BaseEntity;
 
 import jakarta.persistence.*;
