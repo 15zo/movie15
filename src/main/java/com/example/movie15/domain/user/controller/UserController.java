@@ -68,15 +68,4 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원탈퇴가 완료되었습니다.");
     }
-
-//    @GetMapping("/test")
-//    public String test(@AuthenticationPrincipal UserDetails userDetails){
-//        return userDetails.getUsername();
-//        userRepository.find(sdfs)
-//                결제레포지토리.findByUserID(id)
-//                        문의레포지토리.findbyUSer(0);
-//
-//        마이페이지리스폰스디티오(List<결제>, List<문의>)
-//    }
-
 }
