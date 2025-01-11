@@ -45,12 +45,18 @@ public class ReviewService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.MOVIE_NOT_FOUND));
 
-        // review 객체 생성
-        Review review = new Review(dto.getComment(), dto.getRating());
+        // 사용자는 하나의 영화에 하나의 리뷰만 생성 가능
+        if (reviewRepository.existsByUserIdAndMovieId(loginUserId, movieId)) {
+            throw new NotFoundException(ExceptionType.ALREADY_REVIEW);
+        }
 
-        // 리뷰에 유저,영화 정보 넣어주기
-        review.setUser(user);
-        review.setMovie(movie);
+        // review 객체 생성
+        Review review = new Review(
+                dto.getComment(),
+                dto.getRating(),
+                user,
+                movie
+        );
 
         // review 저장
         reviewRepository.save(review);
