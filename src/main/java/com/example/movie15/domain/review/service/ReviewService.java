@@ -32,7 +32,7 @@ public class ReviewService {
      * 사용자가 특정 영화에 대한 리뷰를 작성할 때 호출.
      *
      * @param loginUserId 로그인한 사용자의 ID
-     * @param movieId     영화 ID (영화 정보는 추후 MovieRepository 연동 후 처리 예정)
+     * @param movieId     영화 ID
      * @param dto         리뷰 요청 DTO
      */
     @Transactional
@@ -45,13 +45,19 @@ public class ReviewService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.MOVIE_NOT_FOUND));
 
-        // review 객체 생성
-        Review review = new Review(dto.getComment(), dto.getRating());
+        // 사용자는 하나의 영화에 하나의 리뷰만 생성 가능
+        if (reviewRepository.existsByUserIdAndMovieId(loginUserId, movieId)) {
+            throw new NotFoundException(ExceptionType.ALREADY_REVIEW);
+        }
 
-        // 연관관계 편의메소드
-//        review.setUser(user);
-//        review.setMovie(movie);
-//
+        // review 객체 생성
+        Review review = new Review(
+                dto.getComment(),
+                dto.getRating(),
+                user,
+                movie
+        );
+
         // review 저장
         reviewRepository.save(review);
     }
@@ -77,8 +83,6 @@ public class ReviewService {
                 ));
     }
 
-    // TODO : 에러타입 수정
-
     /**
      * 리뷰를 수정.
      * 사용자가 본인이 작성한 리뷰를 수정할 때 호출.
@@ -90,11 +94,11 @@ public class ReviewService {
     @Transactional
     public void updateReview(Long reviewId, Long loginUserId, ReviewRequestDto dto) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.REVIEW_NOT_FOUND));
 
         // 리뷰작성자의 아이디와 현재로그인유저의 아이디가 다르면 에러처리
         if (!Objects.equals(review.getUser().getId(), loginUserId)) {
-            throw new NotFoundException(ExceptionType.USER_NOT_FOUND); // 잘못된 유저 접근
+            throw new NotFoundException(ExceptionType.FORBIDDEN_ACTION); // 잘못된 유저 접근
         }
 
         // 업데이트
@@ -111,11 +115,11 @@ public class ReviewService {
     @Transactional
     public void deleteReview(Long loginUserId, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.REVIEW_NOT_FOUND));
 
         // 리뷰작성자의 아이디와 현재로그인유저의 아이디가 다르면 에러처리
         if (!Objects.equals(review.getUser().getId(), loginUserId)) {
-            throw new NotFoundException(ExceptionType.USER_NOT_FOUND); // 잘못된 유저 접근
+            throw new NotFoundException(ExceptionType.FORBIDDEN_ACTION); // 잘못된 유저 접근
         }
 
         reviewRepository.delete(review);
