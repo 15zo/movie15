@@ -10,6 +10,7 @@ import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.global.security.AuthenticationScheme;
 import com.example.movie15.global.security.JwtProvider;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -138,6 +139,27 @@ public class UserService {
         if (tempToken != null && tempToken.startsWith("Bearer ")) {
             return tempToken.substring(7);
         }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함되어야 합니다.");
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다.");
+    }
+
+    @Transactional
+    public void logout(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그아웃을 하려면 먼저 로그인을 해야 합니다.");
+        }
+
+        String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다.");
+        }
+
+        String token = extractToken(authorizationHeader);
+
+        if (!jwtProvider.validToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+        }
+
+        jwtProvider.invalidateToken(token);
     }
 }
