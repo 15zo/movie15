@@ -162,5 +162,4 @@ public class UserService {
 
         jwtProvider.invalidateToken(token);
     }
-
 }
