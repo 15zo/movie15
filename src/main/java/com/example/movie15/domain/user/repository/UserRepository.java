@@ -28,3 +28,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.tokenExpiryTime < :now AND u.isVerified = false")
     List<User> findUsersWithExpiredTokens(LocalDateTime now);
 }
+
