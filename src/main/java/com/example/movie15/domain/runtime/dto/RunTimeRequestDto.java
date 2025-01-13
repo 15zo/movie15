@@ -14,5 +14,4 @@ public class RunTimeRequestDto {
 	private Long movieId;      // 영화 ID
 	private LocalDate date;    // 상영 날짜
 	private LocalTime startTime; // 상영 시작 시간
-	private LocalTime endTime;   // 상영 종료 시간
 }

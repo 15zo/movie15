@@ -27,8 +27,8 @@ public class Hall extends BaseEntity {
     @Column(nullable = false)
     private Integer seatCount; // 좌석 수
 
-    @OneToMany(mappedBy = "hall") // RunTime과 1:N 관계
-    private List<RunTime> runTimes = new ArrayList<>();
+    // @OneToMany(mappedBy = "hall") // RunTime과 1:N 관계
+    // private List<RunTime> runTimes = new ArrayList<>();
 
     public Hall(String name, Integer seatCount) {
         this.name = name;

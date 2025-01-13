@@ -1,7 +1,6 @@
 package com.example.movie15.domain.cinema.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 public class CinemaService {
 	private final CinemaRepository cinemaRepository;
 	private final HallRepository hallRepository;
-
 	public CinemaResponseDto createCinema(CinemaRequestDto requestDto) {
 
 		Cinema cinema = new Cinema(requestDto.getLocation(), requestDto.getName());

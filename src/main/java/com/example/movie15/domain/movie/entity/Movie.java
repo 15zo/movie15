@@ -53,4 +53,7 @@ public class Movie extends BaseEntity {
         this.trailerUrl = trailerUrl;
     }
 
+    public int getRuntimeMinutes() {
+        return duration;
+    }
 }

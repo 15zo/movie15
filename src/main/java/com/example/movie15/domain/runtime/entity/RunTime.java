@@ -3,6 +3,7 @@ package com.example.movie15.domain.runtime.entity;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.example.movie15.domain.cinema.entity.CinemaHall;
 import com.example.movie15.domain.cinema.entity.Hall;
 import com.example.movie15.domain.movie.entity.Movie;
 
@@ -26,9 +27,10 @@ public class RunTime {
 	@JoinColumn(name = "movie_id", nullable = false)
 	private Movie movie; // 영화 ID 참조
 
+
 	@ManyToOne
-	@JoinColumn(name = "hall_id", nullable = false)
-	private Hall hall; // 상영관 참조
+	@JoinColumn(name = "cinema_hall_id", nullable = false) // CinemaHall 참조
+	private CinemaHall cinemaHall;
 
 	@Column(nullable = false)
 	private LocalTime startTime; // 상영 시작 시간
@@ -39,11 +41,15 @@ public class RunTime {
 	@Column(nullable = false)
 	private LocalDate date; // 상영 날짜
 
-	public RunTime(Hall hall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime) {
-		this.hall = hall;
+	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime) {
+		this.cinemaHall = cinemaHall;
 		this.movie = movie;
 		this.date = date;
 		this.startTime = startTime;
 		this.endTime = endTime;
+	}
+
+	public RunTime() {
+
 	}
 }

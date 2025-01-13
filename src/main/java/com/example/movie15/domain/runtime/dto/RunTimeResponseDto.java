@@ -21,14 +21,13 @@ public class RunTimeResponseDto {
 	private LocalTime endTime;
 
 	public static RunTimeResponseDto toDto(RunTime runTime) {
-		String cinemaName = runTime.getHall().getCinemaHalls().stream()
-			.findFirst() // 첫 번째 CinemaHall 가져오기
-			.map(cinemaHall -> cinemaHall.getCinema().getName()) // Cinema의 이름 가져오기
-			.orElseThrow(() -> new IllegalStateException("CinemaHall 데이터가 없습니다.")); // 예외 처리
+		// Cinema 이름 가져오기
+		String cinemaName = runTime.getCinemaHall().getCinema().getName();
+
 		return new RunTimeResponseDto(
 			runTime.getId(),
 			cinemaName,
-			runTime.getHall().getName(),
+			runTime.getCinemaHall().getHall().getName(),
 			runTime.getMovie().getTitle(),
 			runTime.getDate(),
 			runTime.getStartTime(),

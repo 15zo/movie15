@@ -1,6 +1,8 @@
-package com.example.movie15.domain.cinema.entity;
+package com.example.movie15.domain.runtime.entity;
 
 import com.example.movie15.domain.booking.entity.BookingSeat;
+import com.example.movie15.domain.cinema.entity.Hall;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -33,4 +35,10 @@ public class Seat {
 
     @OneToMany(mappedBy = "seat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeatList = new ArrayList<>();
+
+    public String getFormattedSeatNumber() {
+        // rowNum을 알파벳으로 변환 (A = 1, B = 2, ...)
+        char rowChar = (char) ('A' + this.rowNum - 1); // 1부터 시작한다고 가정
+        return rowChar + String.valueOf(this.colNum); // 예: 'A1', 'B2'
+    }
 }
