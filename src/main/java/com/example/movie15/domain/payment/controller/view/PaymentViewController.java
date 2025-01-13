@@ -5,13 +5,20 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.movie15.domain.payment.service.PaymentService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/payment")
+@RequiredArgsConstructor
 public class PaymentViewController {
+
+	private final PaymentService paymentService;
+
 
 	@GetMapping
 	public String checkoutPage(Model model) {
@@ -29,7 +36,9 @@ public class PaymentViewController {
 	}
 
 	@GetMapping("/fail")
-	public String failPage(HttpServletRequest request, Model model) {
+	public String failPage(@RequestParam String orderId, HttpServletRequest request, Model model) {
+
+		paymentService.tossPaymentFail(orderId);
 
 		model.addAttribute("code", request.getParameter("code"));
 		model.addAttribute("message", request.getParameter("message"));

@@ -67,4 +67,11 @@ public class Review extends BaseEntity {
         this.comment = comment;
         this.rating = rating;
     }
+
+    /**
+     * 테스트용 메소드
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 }

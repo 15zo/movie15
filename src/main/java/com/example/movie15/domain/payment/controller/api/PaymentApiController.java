@@ -22,21 +22,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.movie15.domain.payment.service.PaymentService;
+
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @Slf4j
+@RequiredArgsConstructor
 public class PaymentApiController {
 
 	@Value("${payment.toss.secretKey}")
 	private String secretKey;
+
+	private final PaymentService paymentService;
 
 	@PostMapping( "/v1/toss/confirm")
 	public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody String jsonBody) throws Exception {
@@ -47,6 +54,18 @@ public class PaymentApiController {
 
 		return ResponseEntity.status(statusCode).body(response);
 	}
+
+	@PostMapping("/booking/{bookingId}/payment")
+	public ResponseEntity tossPaymentCancel(
+		@PathVariable Long bookingId,
+		@RequestParam String paymentKey,
+		@RequestParam String cancelReason
+	) {
+		return ResponseEntity.ok().body(paymentService.tossPaymentCancel(bookingId, paymentKey, cancelReason));
+	}
+
+
+
 
 	private JSONObject parseRequestData(String jsonBody) {
 		try {

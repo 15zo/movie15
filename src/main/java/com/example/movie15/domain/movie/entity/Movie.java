@@ -53,4 +53,15 @@ public class Movie extends BaseEntity {
         this.trailerUrl = trailerUrl;
     }
 
+    /**
+     * 테스트용 메소드
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
 }
