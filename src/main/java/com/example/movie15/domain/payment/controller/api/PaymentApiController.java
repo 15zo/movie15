@@ -48,6 +48,14 @@ public class PaymentApiController {
 		return ResponseEntity.status(statusCode).body(response);
 	}
 
+	@PostMapping("payment/toss/cancel")
+	public ResponseEntity tossPaymentCancel() {
+
+
+
+	}
+
+
 	private JSONObject parseRequestData(String jsonBody) {
 		try {
 			return (JSONObject) new JSONParser().parse(jsonBody);
