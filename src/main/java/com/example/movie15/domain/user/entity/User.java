@@ -87,8 +87,8 @@ public class User extends BaseEntity {
         this.id = id;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void setName(String Name) {
+        this.name = Name;
     }
 
 }
