@@ -42,4 +42,10 @@ public class UserRequestDto {
 
         this.password = encryptedPassword;
     }
+
+    // 테스트용 생성자
+    public UserRequestDto(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
 }
