@@ -145,7 +145,7 @@ class ReviewServiceTest {
         Pageable pageable = Pageable.unpaged();
 
         Review review = new Review("그냥그런영화", 5, new User(), new Movie());
-        review.getUser().setNickname("김명호");
+        review.getUser().setName("김명호");
 
         Page<Review> reviews = new PageImpl<>(List.of(review));
 
