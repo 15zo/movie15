@@ -43,4 +43,8 @@ public interface RunTimeRepository extends JpaRepository<RunTime, Long> {
 		return runTimes;
 	}
 
+	default RunTime findByIdOrElseThrow(Long runtimeId){
+		return findById(runtimeId).orElseThrow(()->new NotFoundException(ExceptionType.RUN_TIME_NOT_FOUND));
+
+	}
 }

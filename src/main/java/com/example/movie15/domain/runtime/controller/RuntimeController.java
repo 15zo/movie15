@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +33,13 @@ public class RuntimeController {
 	public ResponseEntity<RunTimeResponseDto> createRunTime(@RequestBody RunTimeRequestDto requestDto) {
 		RunTimeResponseDto createdRunTime = runTimeService.createRunTime(requestDto);
 		return ResponseEntity.status(HttpStatus.CREATED).body(createdRunTime);
+	}
+
+	//상영시간 삭제
+	@DeleteMapping("{runtimeId}")
+	public ResponseEntity<String> deleteRunTIme(@PathVariable Long runtimeId) {
+		runTimeService.deleteRunTime(runtimeId);
+		return ResponseEntity.status(HttpStatus.OK).body("삭제 되었습니다.");
 	}
 
 	//영화관 영화 조회(cinema_hallId 로 바꾸는게 좋을지)

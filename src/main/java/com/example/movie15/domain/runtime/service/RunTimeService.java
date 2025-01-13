@@ -95,4 +95,9 @@ public class RunTimeService {
 			))
 			.collect(Collectors.toList());
 	}
+
+	public void deleteRunTime(Long runtimeId) {
+		RunTime runTime = runTimeRepository.findByIdOrElseThrow(runtimeId);
+		runTimeRepository.delete(runTime);
+	}
 }
