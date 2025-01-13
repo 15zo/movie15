@@ -84,4 +84,13 @@ public class User extends BaseEntity {
         this.tokenExpiryTime = LocalDateTime.now().plusMinutes(10);
     }
 
+    // 테스트용
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
 }
