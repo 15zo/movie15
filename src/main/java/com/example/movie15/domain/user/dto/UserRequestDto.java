@@ -39,6 +39,7 @@ public class UserRequestDto {
     }
 
     public void updatePassword(String encryptedPassword) {
+
         this.password = encryptedPassword;
     }
 }

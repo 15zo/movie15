@@ -22,6 +22,19 @@ public class Cinema extends BaseEntity {
     private String location;
 
     @OneToMany(mappedBy = "cinema", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Hall> hallList = new ArrayList<>();
+    private List<CinemaHall> cinemaHalls = new ArrayList<>();
+
+    public Cinema(String location, String name) {
+        this.location = location;
+        this.name = name;
+    }
+
+    public Cinema() {
+
+    }
+
+    public void addCinemaHall(CinemaHall cinemaHall) {
+        this.cinemaHalls.add(cinemaHall);
+    }
 
 }

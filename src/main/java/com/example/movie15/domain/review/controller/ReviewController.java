@@ -5,13 +5,16 @@ import com.example.movie15.domain.review.dto.ReviewRequestDto;
 import com.example.movie15.domain.review.dto.ReviewResponseDto;
 import com.example.movie15.domain.review.service.ReviewService;
 import com.example.movie15.global.security.service.UserDetailsImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 리뷰 관련 API 를 처리하는 컨트롤러 클래스.
@@ -36,12 +39,13 @@ public class ReviewController {
     @PostMapping("/movies/{movieId}")
     public ResponseEntity<String> createReview(
             @PathVariable Long movieId,
-            @RequestBody ReviewRequestDto dto,
+            @RequestBody @Valid ReviewRequestDto dto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         Long loginUserId = userDetails.getUser().getId();
 
         reviewService.createReview(loginUserId, movieId, dto);
+
         return ResponseEntity.status(HttpStatus.CREATED).body("리뷰작성완료");
     }
 
@@ -53,12 +57,21 @@ public class ReviewController {
      * @return ResponseEntity 리뷰 목록과 상태 코드
      */
     @GetMapping
-    public ResponseEntity<List<ReviewResponseDto>> findReviews(
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+    public ResponseEntity<Page<ReviewResponseDto>> findReviews(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
     ) {
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+
         Long loginUserId = userDetails.getUser().getId();
 
-        return ResponseEntity.status(HttpStatus.OK).body(reviewService.findReviews(loginUserId));
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.findReviews(loginUserId, pageable));
     }
 
     /**
@@ -68,8 +81,19 @@ public class ReviewController {
      * @return 영화에 대한 리뷰 목록을 포함하는 ResponseEntity. 영화에 대한 리뷰가 없으면 빈 리스트를 반환.
      */
     @GetMapping("/movies/{movieId}")
-    public ResponseEntity<List<MovieReviewsResponseDto>> findMovieReviews(@PathVariable Long movieId) {
-        List<MovieReviewsResponseDto> reviewList = reviewService.findMovieReviews(movieId);
+    public ResponseEntity<Page<MovieReviewsResponseDto>> findMovieReviews(
+            @PathVariable Long movieId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+    ) {
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<MovieReviewsResponseDto> reviewList = reviewService.findMovieReviews(movieId, pageable);
 
         return ResponseEntity.status(HttpStatus.OK).body(reviewList);
     }
@@ -86,10 +110,11 @@ public class ReviewController {
     @PatchMapping("/{reviewId}")
     public ResponseEntity<String> updateReview(
             @PathVariable Long reviewId,
-            @RequestBody ReviewRequestDto dto,
+            @RequestBody @Valid ReviewRequestDto dto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         Long loginUserId = userDetails.getUser().getId();
+
         reviewService.updateReview(reviewId, loginUserId, dto);
 
         return ResponseEntity.status(HttpStatus.OK).body("수정완료");

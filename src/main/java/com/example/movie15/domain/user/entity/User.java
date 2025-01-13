@@ -54,12 +54,10 @@ public class User extends BaseEntity {
     }
 
     public void updateIsDeleted() {
-
         this.isDeleted = true;
     }
 
     public void updatePassword(String newPassword) {
-
         this.password = newPassword;
     }
 
@@ -84,6 +82,17 @@ public class User extends BaseEntity {
     // 인증토큰 만료시간 생성 (회원가입요청시간 + 10분)
     public void setTokenExpiryTime() {
         this.tokenExpiryTime = LocalDateTime.now().plusMinutes(10);
+    }
+
+    /**
+     * 테스트용 메소드
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
 }
