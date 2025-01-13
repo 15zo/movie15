@@ -33,6 +33,11 @@ public class Booking {
                 this.bookingStatus = BookingStatus.COMPLETED;
                 this.payment = payment;
             }
+            case CANCELED -> {
+                this.bookingStatus = BookingStatus.CANCELED;
+                this.payment = payment;
+            }
+            default -> throw new UnsupportedOperationException("Unsupported booking status: " + bookingStatus);
         }
     }
 
