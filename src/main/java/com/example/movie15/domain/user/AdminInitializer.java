@@ -4,9 +4,11 @@ import com.example.movie15.domain.user.entity.Role;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class AdminInitializer {
 
@@ -33,9 +35,9 @@ public class AdminInitializer {
                     Role.ADMIN
             );
             userRepository.save(admin);
-            System.out.println("기본 관리자 계정이 생성되었습니다: " + adminEmail);
+            log.info("기본 관리자 계정이 생성되었습니다: " + adminEmail);
         } else {
-            System.out.println("관리자 계정이 이미 존재합니다.");
+            log.info("관리자 계정이 이미 존재합니다.");
         }
     }
 }
