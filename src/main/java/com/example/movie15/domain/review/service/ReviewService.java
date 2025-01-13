@@ -147,7 +147,7 @@ public class ReviewService {
 
         return reviews
                 .map(review -> new MovieReviewsResponseDto(
-                        review.getUser().getNickname(), // 유저닉네임
+                        review.getUser().getName(), // 유저이름
                         review.getComment(),            // 리뷰코멘트
                         review.getRating()              // 리뷰별점
                 ));

@@ -26,7 +26,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Column(nullable = false, length = 10)
-    private String nickname;
+    private String name;
 
     @Column(nullable = false, length = 10)
     @Enumerated(value = EnumType.STRING)
@@ -39,17 +39,17 @@ public class User extends BaseEntity {
     private LocalDateTime tokenExpiryTime; // 인증토큰 만료 시간
 
     // 회원가입용 생성자
-    public User(String email, String password, String nickname) {
+    public User(String email, String password, String name) {
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
+        this.name = name;
     }
 
     // 관리자 생성용 생성자
-    public User(String email, String password, String nickname, Role role) {
+    public User(String email, String password, String name, Role role) {
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
+        this.name = name;
         this.role = role;
     }
 
@@ -61,8 +61,8 @@ public class User extends BaseEntity {
         this.password = newPassword;
     }
 
-    public void updateNickname(String newNickname) {
-        this.nickname = newNickname;
+    public void updateName(String newName) {
+        this.name = newName;
     }
 
     public void changeRole(Role newRole) {

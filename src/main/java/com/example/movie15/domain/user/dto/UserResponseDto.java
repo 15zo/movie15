@@ -17,7 +17,7 @@ public class UserResponseDto {
     public UserResponseDto(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
-        this.nickname = user.getNickname();
+        this.nickname = user.getName();
         this.role = user.getRole();
         this.isVerified = user.isVerified();
     }
