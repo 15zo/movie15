@@ -6,7 +6,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 
-import org.hibernate.validator.internal.constraintvalidators.bv.time.past.PastValidatorForYear;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -23,7 +22,6 @@ import com.example.movie15.domain.booking.enums.PaymentStatus;
 import com.example.movie15.domain.booking.repository.BookingRepository;
 import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.payment.repository.PaymentRepository;
-import com.example.movie15.global.exception.CustomException;
 import com.example.movie15.global.exception.ExceptionType;
 import com.example.movie15.global.exception.NotFoundException;
 
@@ -38,10 +36,10 @@ public class PaymentService {
 	private final BookingRepository bookingRepository;
 
 	@Value("${payment.toss.secretKey}")
-	private final String secretKey;
+	private String secretKey;
 
-	@Value("${payment.toss.url")
-	private final String url;
+	@Value("${payment.toss.url}")
+	private String tossUrl;
 
 	// 결제 성공
 	@Transactional
@@ -113,7 +111,7 @@ public class PaymentService {
 		JSONObject params = new JSONObject();
 		params.put("cancelReason", cancelReason);
 
-		return restTemplate.postForObject(url + paymentKey + "/cancel",
+		return restTemplate.postForObject(tossUrl + paymentKey + "/cancel",
 			new HttpEntity<>(params, headers), Map.class);
 	}
 }
