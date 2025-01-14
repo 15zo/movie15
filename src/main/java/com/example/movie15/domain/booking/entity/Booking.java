@@ -25,13 +25,13 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus;
 
-    @OneToOne(fetch = LAZY)
+    @OneToOne(fetch = LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Payment payment;
 
     @ManyToOne(fetch = LAZY)
     private RunTime runTime;
 
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     private User user;
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)

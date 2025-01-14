@@ -61,6 +61,13 @@ public class BookingService {
 			.toList();
 	}
 
+	// 영화 예매 취소
+	@Transactional
+	public void cancelBooking(User user, Long bookingId) {
+		Booking findBooking = bookingRepository.findBookingByIdAndUserId(bookingId, user.getId());
+
+		bookingRepository.delete(findBooking);
+	}
 
 
 	private void checkingBookingSeatAvaiable(BookingRequestDto requestDto) {
