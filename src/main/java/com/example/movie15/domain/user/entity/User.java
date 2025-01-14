@@ -1,14 +1,14 @@
 package com.example.movie15.domain.user.entity;
 
+import com.example.movie15.domain.review.entity.Review;
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.joda.time.LocalDateTime;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -37,6 +37,9 @@ public class User extends BaseEntity {
     private boolean isVerified; // 이메일 인증 여부
     private String verificationToken; // 이메일 인증 토큰
     private LocalDateTime tokenExpiryTime; // 인증토큰 만료 시간
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviewList = new ArrayList<>();
 
     // 회원가입용 생성자
     public User(String email, String password, String name) {
