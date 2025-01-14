@@ -1,4 +1,4 @@
-package com.example.movie15.domain.review.dto;
+package com.example.movie15.domain.movie.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

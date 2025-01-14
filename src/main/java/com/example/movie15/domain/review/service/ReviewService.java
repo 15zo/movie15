@@ -2,7 +2,6 @@ package com.example.movie15.domain.review.service;
 
 import com.example.movie15.domain.movie.entity.Movie;
 import com.example.movie15.domain.movie.repository.MovieRepository;
-import com.example.movie15.domain.review.dto.MovieReviewsResponseDto;
 import com.example.movie15.domain.review.dto.ReviewRequestDto;
 import com.example.movie15.domain.review.dto.ReviewResponseDto;
 import com.example.movie15.domain.review.entity.Review;
@@ -53,12 +52,11 @@ public class ReviewService {
         }
 
         // review 객체 생성
-        Review review = new Review(
-                dto.getComment(),
-                dto.getRating(),
-                user,
-                movie
-        );
+        Review review = new Review(dto.getComment(), dto.getRating());
+
+        // 연관관계 편의메소드
+        review.setUser(user);
+        review.setMovie(movie);
 
         // review 저장
         reviewRepository.save(review);
@@ -133,31 +131,4 @@ public class ReviewService {
         }
     }
 
-    /**
-     * 특정 영화에 대한 리뷰 목록을 조회하는 서비스 메서드.
-     *
-     * @param movieId 조회할 영화의 ID
-     * @return 영화에 대한 모든 리뷰 목록. 리뷰가 없으면 빈 리스트를 반환.
-     * @throws NotFoundException 영화가 존재하지 않으면 예외를 발생시킴.
-     */
-    public Page<MovieReviewsResponseDto> findMovieReviews(Long movieId, Pageable pageable) {
-        // 영화찾기. 없으면 에러
-        boolean isExist = movieRepository.existsById(movieId);
-        if (!isExist) {
-            throw new NotFoundException(ExceptionType.MOVIE_NOT_FOUND);
-        }
-
-        // 영화에 대한 리뷰 목록을 조회하고, 리뷰가 없으면 빈 리스트 반환
-        Page<Review> reviews = reviewRepository.findAllByMovieIdWithUser(movieId, pageable);
-        if (reviews.isEmpty()) {
-            return Page.empty();
-        }
-
-        return reviews
-                .map(review -> new MovieReviewsResponseDto(
-                        review.getUser().getName(), // 유저이름
-                        review.getComment(),            // 리뷰코멘트
-                        review.getRating()              // 리뷰별점
-                ));
-    }
 }

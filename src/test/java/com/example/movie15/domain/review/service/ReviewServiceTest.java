@@ -2,8 +2,6 @@ package com.example.movie15.domain.review.service;
 
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
-
-import com.example.movie15.domain.review.dto.MovieReviewsResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -129,6 +127,7 @@ class ReviewServiceTest {
         review.setId(reviewId);
 
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+        when(userRepository.findById(loginUserId)).thenReturn(Optional.of(user));
 
         // When: 리뷰 삭제 메서드 호출
         reviewService.deleteReview(loginUserId, reviewId);
@@ -137,26 +136,4 @@ class ReviewServiceTest {
         verify(reviewRepository, times(1)).delete(review);
     }
 
-    @Test
-    @DisplayName("영화 리뷰 조회 테스트 - 특정 영화에 리뷰가 있을 때 리뷰 반환")
-    void findMovieReviews_ShouldReturnReviews_WhenMovieHasReviews() {
-        // Given: 특정 영화의 리뷰 데이터가 존재
-        Long movieId = 1L;
-        Pageable pageable = Pageable.unpaged();
-
-        Review review = new Review("그냥그런영화", 5, new User(), new Movie());
-        review.getUser().setName("김명호");
-
-        Page<Review> reviews = new PageImpl<>(List.of(review));
-
-        when(movieRepository.existsById(movieId)).thenReturn(true);
-        when(reviewRepository.findAllByMovieIdWithUser(movieId, pageable)).thenReturn(reviews);
-
-        // When: 영화 리뷰 조회 메서드 호출
-        Page<MovieReviewsResponseDto> result = reviewService.findMovieReviews(movieId, pageable);
-
-        // Then: 영화 리뷰 데이터가 정확히 반환되었는지 확인
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getUserNickname()).isEqualTo("김명호");
-    }
 }
