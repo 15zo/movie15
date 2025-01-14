@@ -2,6 +2,9 @@ package com.example.movie15.domain.booking.controller;
 
 import java.util.List;
 
+import org.junit.runner.Request;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,5 +39,18 @@ public class BookingController {
 		BookingResponseDto responseDto = bookingService.createBooking(user, requestDto);
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+	}
+
+	// 예매 조회
+	@GetMapping
+	public ResponseEntity<List<BookingResponseDto>> findAllBooking(
+		@AuthenticationPrincipal User user,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+
+		List<BookingResponseDto> responseDtoList = bookingService.findAllBooking(user, pageable);
+
+		return ResponseEntity.status(HttpStatus.OK).body(responseDtoList);
 	}
 }

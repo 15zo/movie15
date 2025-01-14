@@ -3,6 +3,7 @@ package com.example.movie15.domain.booking.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,18 @@ public class BookingService {
 
 		return BookingResponseDto.toDto(booking, findRunTime);
 	}
+
+	// 영화 예매 조회
+	public List<BookingResponseDto> findAllBooking(User user, Pageable pageable) {
+
+		List<Booking> bookingList = bookingRepository.findBookingsByUserId(user.getId(), pageable).getContent();
+
+		return bookingList.stream()
+			.map(booking -> BookingResponseDto.toDto(booking, booking.getRunTime()))
+			.toList();
+	}
+
+
 
 	private void checkingBookingSeatAvaiable(BookingRequestDto requestDto) {
 		if (bookingSeatRepository.existsBookingSeatBySeatIdAndRuntime(requestDto.getRuntimeId(),
