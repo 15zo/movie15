@@ -18,7 +18,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Getter
 public class Booking {
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -55,6 +55,7 @@ public class Booking {
     public Booking(BookingStatus bookingStatus, Payment payment, RunTime runTime, List<Seat> seatList) {
         this.bookingStatus = bookingStatus;
         this.payment = payment;
+        this.runTime = runTime;
 
         seatList.stream()
             .map(seat -> new BookingSeat(seat, runTime, this))
