@@ -75,4 +75,15 @@ class BookingServiceTest {
 		bookingRepository.save(booking);
 
 	}
+
+	@Commit
+	@Test
+	void 예매취소(){
+		Long bookingId = 3L;
+		User user = userRepository.findByIdOrElseThrow(1L);
+
+		Booking findBooking = bookingRepository.findBookingByIdAndUserId(bookingId, user.getId());
+
+		bookingRepository.delete(findBooking);
+	}
 }

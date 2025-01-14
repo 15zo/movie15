@@ -17,7 +17,7 @@ public class BookingSeat {
     private Long id;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "booking_id", nullable = false)
+    @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
     @ManyToOne(fetch = LAZY)
@@ -26,7 +26,7 @@ public class BookingSeat {
 
     @Setter
 	@ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "seat_id", nullable = false)
+    @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
 
     public BookingSeat() {
