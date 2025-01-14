@@ -3,6 +3,7 @@ package com.example.movie15.domain.booking.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import com.example.movie15.domain.cinema.entity.Seat;
 import com.example.movie15.domain.cinema.repository.SeatRepository;
 import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.domain.runtime.repository.RunTimeRepository;
+import com.example.movie15.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,7 +35,7 @@ public class BookingService {
 
 	// 영화 예매 예약
 	@Transactional
-	public BookingResponseDto createBooking(BookingRequestDto requestDto) {
+	public BookingResponseDto createBooking(User user, BookingRequestDto requestDto) {
 		// 상영 정보 찾기 찾기
 		RunTime findRunTime = getRunTime(requestDto.getRuntimeId());
 
@@ -42,7 +44,7 @@ public class BookingService {
 
 		// 예매 생성
 		List<Seat> seatList = seatRepository.findByIdList(requestDto.getBookingSeat());
-		Booking booking = new Booking(BookingStatus.PENDING, null, findRunTime, seatList);
+		Booking booking = new Booking(BookingStatus.PENDING, null, findRunTime, user, seatList);
 		bookingRepository.save(booking);
 
 		return BookingResponseDto.toDto(booking, findRunTime);

@@ -25,6 +25,8 @@ import com.example.movie15.domain.movie.entity.Movie;
 import com.example.movie15.domain.movie.repository.MovieRepository;
 import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.domain.runtime.repository.RunTimeRepository;
+import com.example.movie15.domain.user.entity.User;
+import com.example.movie15.domain.user.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,6 +50,8 @@ class BookingServiceTest {
 	@Autowired
 	private RunTimeRepository runTimeRepository;
 
+	@Autowired
+	private UserRepository userRepository;
 
 	@Commit
 	@Test
@@ -65,7 +69,9 @@ class BookingServiceTest {
 
 		runTimeRepository.save(runTime);
 
-		Booking booking = new Booking(BookingStatus.PENDING, null, runTime, findSeatList);
+		User user = userRepository.findByIdOrElseThrow(1L);
+
+		Booking booking = new Booking(BookingStatus.PENDING, null, runTime, user, findSeatList);
 		bookingRepository.save(booking);
 
 	}

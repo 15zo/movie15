@@ -4,6 +4,7 @@ import com.example.movie15.domain.booking.enums.BookingStatus;
 import com.example.movie15.domain.cinema.entity.Seat;
 import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.runtime.entity.RunTime;
+import com.example.movie15.domain.user.entity.User;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -30,6 +31,9 @@ public class Booking {
     @ManyToOne(fetch = LAZY)
     private RunTime runTime;
 
+    @ManyToOne
+    private User user;
+
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeatList = new ArrayList<>();
 
@@ -52,10 +56,11 @@ public class Booking {
     public Booking() {
     }
 
-    public Booking(BookingStatus bookingStatus, Payment payment, RunTime runTime, List<Seat> seatList) {
+    public Booking(BookingStatus bookingStatus, Payment payment, RunTime runTime, User user, List<Seat> seatList) {
         this.bookingStatus = bookingStatus;
         this.payment = payment;
         this.runTime = runTime;
+        this.user = user;
 
         seatList.stream()
             .map(seat -> new BookingSeat(seat, runTime, this))
