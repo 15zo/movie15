@@ -10,26 +10,34 @@ import com.example.movie15.domain.payment.service.PaymentService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @RequestMapping("/api/payment")
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentViewController {
 
 	private final PaymentService paymentService;
 
 
 	@GetMapping
-	public String checkoutPage(Model model) {
-		model.addAttribute("orderId", "testId");
-		model.addAttribute("orderName", "testName");
-		model.addAttribute("amount", 10000);
+	public String checkoutPage(
+		@RequestParam String orderId,
+		@RequestParam String orderName,
+		@RequestParam Long amount,
+		Model model) {
+		model.addAttribute("orderId", orderId);
+		model.addAttribute("orderName", orderName);
+		model.addAttribute("amount", amount);
 
 		return "/payment/checkout";
 	}
 
 	@GetMapping("/success")
 	public String successPage() {
+
+
 
 		return "/payment/success";
 	}
