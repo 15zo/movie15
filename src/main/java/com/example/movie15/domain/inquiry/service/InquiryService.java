@@ -7,10 +7,11 @@ import com.example.movie15.domain.inquiry.enums.InquiryStatus;
 import com.example.movie15.domain.inquiry.repository.InquiryRepository;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
+import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.NotFoundException;
 import com.example.movie15.global.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +26,7 @@ public class InquiryService {
 
     public InquiryResponseDto createInquiry(InquiryRequestDto dto, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
         Inquiry inquiry = new Inquiry(dto.getSubject(), dto.getContent(), user);
         Inquiry savedInquiry = inquiryRepository.save(inquiry);
@@ -54,7 +55,7 @@ public class InquiryService {
     @Transactional
     public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, Long userId) {
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         if (inquiry.isAnswered()) {
             throw new IllegalStateException("이미 답변된 문의는 수정할 수 없습니다.");
