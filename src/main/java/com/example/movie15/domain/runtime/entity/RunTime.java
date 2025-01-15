@@ -1,5 +1,7 @@
 package com.example.movie15.domain.runtime.entity;
 
+import static jakarta.persistence.FetchType.*;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -8,6 +10,7 @@ import com.example.movie15.domain.movie.entity.Movie;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,11 +25,11 @@ public class RunTime {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; // 상영 시간 고유 식별자
 
-	@ManyToOne
+	@ManyToOne(fetch = LAZY)
 	@JoinColumn(name = "movie_id", nullable = false)
 	private Movie movie; // 영화 ID 참조
 
-	@ManyToOne
+	@ManyToOne(fetch = LAZY)
 	@JoinColumn(name = "hall_id", nullable = false)
 	private Hall hall; // 상영관 참조
 
@@ -46,5 +49,7 @@ public class RunTime {
 		this.startTime = startTime;
 		this.endTime = endTime;
 	}
-	public RunTime() {}
+
+	public RunTime() {
+	}
 }
