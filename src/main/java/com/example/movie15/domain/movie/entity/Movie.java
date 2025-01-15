@@ -1,9 +1,13 @@
 package com.example.movie15.domain.movie.entity;
 
+import com.example.movie15.domain.review.entity.Review;
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -37,6 +41,9 @@ public class Movie extends BaseEntity {
 
     @Column
     private Integer duration; // 상영 시간 (분)
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviewList = new ArrayList<>();
 
     // 모든 필드를 초기화하는 생성자
     public Movie(String title, String content, String productionYear, Integer duration, String genre, String status, String moviePosterUrl) {

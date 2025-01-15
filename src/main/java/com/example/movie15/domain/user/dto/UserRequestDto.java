@@ -20,26 +20,32 @@ public class UserRequestDto {
     )
     private String password;
 
-    @NotBlank(message = "nickname은 필수 입력 항목입니다.")
+    @NotBlank(message = "name은 필수 입력 항목입니다.")
     @Size(max = 10)
-    private String nickname;
+    private String name;
 
     public UserRequestDto(String email, String password, String nickname) {
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
+        this.name = nickname;
     }
 
     public User toEntity() {
         return new User(
                 this.email,
                 this.password,
-                this.nickname
+                this.name
         );
     }
 
     public void updatePassword(String encryptedPassword) {
 
         this.password = encryptedPassword;
+    }
+
+    // 테스트용 생성자
+    public UserRequestDto(String email, String password) {
+        this.email = email;
+        this.password = password;
     }
 }

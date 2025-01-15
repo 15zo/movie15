@@ -67,13 +67,7 @@ public class UserService {
 
     @Transactional
     public void updateUserInfo(Long userId, UpdateUserRequestDto updateUserRequestDto) {
-
         User user = userRepository.findByIdOrElseThrow(userId);
-
-        // 닉네임 업데이트
-        if (updateUserRequestDto.getNickname() != null && !updateUserRequestDto.getNickname().isBlank()) {
-            user.updateNickname(updateUserRequestDto.getNickname());
-        }
 
         // 비밀번호 업데이트
         if (updateUserRequestDto.getOldPassword() != null && updateUserRequestDto.getNewPassword() != null) {

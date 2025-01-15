@@ -2,15 +2,16 @@ package com.example.movie15.domain.review.service;
 
 import com.example.movie15.domain.movie.entity.Movie;
 import com.example.movie15.domain.movie.repository.MovieRepository;
-import com.example.movie15.domain.review.dto.MovieReviewsResponseDto;
 import com.example.movie15.domain.review.dto.ReviewRequestDto;
 import com.example.movie15.domain.review.dto.ReviewResponseDto;
 import com.example.movie15.domain.review.entity.Review;
 import com.example.movie15.domain.review.repository.ReviewRepository;
+import com.example.movie15.domain.user.entity.Role;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.global.exception.ExceptionType;
 import com.example.movie15.global.exception.NotFoundException;
+import com.example.movie15.global.exception.WrongAccessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,16 +48,15 @@ public class ReviewService {
 
         // 사용자는 하나의 영화에 하나의 리뷰만 생성 가능
         if (reviewRepository.existsByUserIdAndMovieId(loginUserId, movieId)) {
-            throw new NotFoundException(ExceptionType.ALREADY_REVIEW);
+            throw new WrongAccessException(ExceptionType.ALREADY_REVIEW);
         }
 
         // review 객체 생성
-        Review review = new Review(
-                dto.getComment(),
-                dto.getRating(),
-                user,
-                movie
-        );
+        Review review = new Review(dto.getComment(), dto.getRating());
+
+        // 연관관계 편의메소드
+        review.setUser(user);
+        review.setMovie(movie);
 
         // review 저장
         reviewRepository.save(review);
@@ -98,7 +98,7 @@ public class ReviewService {
 
         // 리뷰작성자의 아이디와 현재로그인유저의 아이디가 다르면 에러처리
         if (!Objects.equals(review.getUser().getId(), loginUserId)) {
-            throw new NotFoundException(ExceptionType.FORBIDDEN_ACTION); // 잘못된 유저 접근
+            throw new WrongAccessException(ExceptionType.FORBIDDEN_ACTION); // 잘못된 유저 접근
         }
 
         // 업데이트
@@ -117,39 +117,18 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.REVIEW_NOT_FOUND));
 
-        // 리뷰작성자의 아이디와 현재로그인유저의 아이디가 다르면 에러처리
-        if (!Objects.equals(review.getUser().getId(), loginUserId)) {
-            throw new NotFoundException(ExceptionType.FORBIDDEN_ACTION); // 잘못된 유저 접근
-        }
+        User loginUser = userRepository.findById(loginUserId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
-        reviewRepository.delete(review);
+        // 리뷰 작성자 ID 비교 및 관리자 권한 체크
+        boolean isReviewOwner = Objects.equals(review.getUser().getId(), loginUserId);
+        boolean isAdmin = Objects.equals(loginUser.getRole(), Role.ADMIN);
+
+        if (isReviewOwner || isAdmin) {
+            reviewRepository.delete(review);
+        } else {
+            throw new WrongAccessException(ExceptionType.FORBIDDEN_ACTION);
+        }
     }
 
-    /**
-     * 특정 영화에 대한 리뷰 목록을 조회하는 서비스 메서드.
-     *
-     * @param movieId 조회할 영화의 ID
-     * @return 영화에 대한 모든 리뷰 목록. 리뷰가 없으면 빈 리스트를 반환.
-     * @throws NotFoundException 영화가 존재하지 않으면 예외를 발생시킴.
-     */
-    public Page<MovieReviewsResponseDto> findMovieReviews(Long movieId, Pageable pageable) {
-        // 영화찾기. 없으면 에러
-        boolean isExist = movieRepository.existsById(movieId);
-        if (!isExist) {
-            throw new NotFoundException(ExceptionType.MOVIE_NOT_FOUND);
-        }
-
-        // 영화에 대한 리뷰 목록을 조회하고, 리뷰가 없으면 빈 리스트 반환
-        Page<Review> reviews = reviewRepository.findAllByMovieIdWithUser(movieId, pageable);
-        if (reviews.isEmpty()) {
-            return Page.empty();
-        }
-
-        return reviews
-                .map(review -> new MovieReviewsResponseDto(
-                        review.getUser().getNickname(), // 유저닉네임
-                        review.getComment(),            // 리뷰코멘트
-                        review.getRating()              // 리뷰별점
-                ));
-    }
 }

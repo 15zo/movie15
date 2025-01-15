@@ -1,6 +1,5 @@
 package com.example.movie15.domain.review.controller;
 
-import com.example.movie15.domain.review.dto.MovieReviewsResponseDto;
 import com.example.movie15.domain.review.dto.ReviewRequestDto;
 import com.example.movie15.domain.review.dto.ReviewResponseDto;
 import com.example.movie15.domain.review.service.ReviewService;
@@ -72,30 +71,6 @@ public class ReviewController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.findReviews(loginUserId, pageable));
-    }
-
-    /**
-     * 영화 ID에 해당하는 리뷰 목록을 조회.
-     *
-     * @param movieId 조회할 영화의 ID
-     * @return 영화에 대한 리뷰 목록을 포함하는 ResponseEntity. 영화에 대한 리뷰가 없으면 빈 리스트를 반환.
-     */
-    @GetMapping("/movies/{movieId}")
-    public ResponseEntity<Page<MovieReviewsResponseDto>> findMovieReviews(
-            @PathVariable Long movieId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction
-    ) {
-        Sort sort = direction.equalsIgnoreCase("desc") ?
-                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<MovieReviewsResponseDto> reviewList = reviewService.findMovieReviews(movieId, pageable);
-
-        return ResponseEntity.status(HttpStatus.OK).body(reviewList);
     }
 
     /**

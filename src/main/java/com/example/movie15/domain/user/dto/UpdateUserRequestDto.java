@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
-// 비밀번호와 닉네임은 선택적으로 수정 가능
+// 비밀번호 수정
 @Getter
 public class UpdateUserRequestDto {
 
@@ -17,7 +17,4 @@ public class UpdateUserRequestDto {
             message = "비밀번호는 최소 8자 이상, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다."
     )
     private String newPassword;
-
-    @Size(max = 10, message = "닉네임은 최대 10자까지 가능합니다.")
-    private String nickname;
-    }
+}
