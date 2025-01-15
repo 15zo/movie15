@@ -42,7 +42,7 @@ public class RuntimeController {
 		return ResponseEntity.status(HttpStatus.OK).body("삭제 되었습니다.");
 	}
 
-	//영화관 영화 조회(cinema_hallId 로 바꾸는게 좋을지)
+	//영화관 영화 상영시간 조회(cinema_hallId 로 바꾸는게 좋을지)
 	@GetMapping("/cinemas/{cinemaId}/movies/{movieId}/schedule")
 	public ResponseEntity<List<MovieScheduleDto>> getMovieSchedule(
 		@PathVariable Long cinemaId,
@@ -52,10 +52,10 @@ public class RuntimeController {
 		return ResponseEntity.status(HttpStatus.OK).body(schedule);
 	}
 
-
-	@GetMapping("/{runTimeId}")
-	public ResponseEntity<List<SeatDto>> getSeatsByRunTime(@PathVariable Long runTimeId) {
-		List<SeatDto> seatList = runTimeService.getSeatsByRunTime(runTimeId);
+	//해당상영시간 좌석조회
+	@GetMapping("/{runtimeId}")
+	public ResponseEntity<List<SeatDto>> getSeatsByRunTime(@PathVariable Long runtimeId) {
+		List<SeatDto> seatList = runTimeService.getSeatsByRunTime(runtimeId);
 		return ResponseEntity.status(HttpStatus.OK).body(seatList);
 	}
 }

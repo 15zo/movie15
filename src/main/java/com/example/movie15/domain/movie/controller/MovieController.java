@@ -1,5 +1,7 @@
 package com.example.movie15.domain.movie.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,6 +58,13 @@ public class MovieController {
 		Page<MovieResponseDto> moviePage = movieService.searchMovies(title, genre, pageable);
 		return ResponseEntity.ok(moviePage);
 	}
+
+	@GetMapping("/playing")
+	public ResponseEntity<List<MovieResponseDto>> getCurrentlyPlayingMovies() {
+		List<MovieResponseDto> movies = movieService.getCurrentlyPlayingMovies();
+		return ResponseEntity.ok(movies);
+	}
+
 
 	@GetMapping("/{movieId}")
 	public ResponseEntity<MovieDetailsResponseDto> findMovie(@PathVariable Long movieId) {

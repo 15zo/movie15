@@ -1,6 +1,7 @@
 package com.example.movie15.domain.movie.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import com.example.movie15.domain.movie.dto.MovieDto;
 import com.example.movie15.domain.movie.dto.MovieResponseDto;
 import com.example.movie15.domain.movie.entity.Movie;
 import com.example.movie15.domain.movie.repository.MovieRepository;
+import com.example.movie15.domain.runtime.repository.RunTimeRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +24,7 @@ public class MovieService {
 
 	private final MovieRepository movieRepository;
 	private final TmdbService tmdbService;
+	private final RunTimeRepository runTimeRepository;
 
 	@Transactional
 	public Movie saveMovieFromTmdb(Long tmdbId) {
@@ -40,7 +43,6 @@ public class MovieService {
 			tmdbMovie.getRelease_date() != null ? tmdbMovie.getRelease_date() : null,
 			tmdbMovie.getRuntime() != null ? tmdbMovie.getRuntime() : 0, // runtime 처리
 			genre,
-			tmdbMovie.getStatus(),
 			tmdbMovie.getPoster_path() != null ? "https://image.tmdb.org/t/p/w500" + tmdbMovie.getPoster_path() : null
 		);
 		movie.setTrailerUrl(trailerUrl);
@@ -70,7 +72,6 @@ public class MovieService {
 					movieDetails.getRelease_date() != null ? movieDetails.getRelease_date() : null,
 					movieDetails.getRuntime() != null ? movieDetails.getRuntime() : 0, // runtime 처리
 					genre,
-					movieDetails.getStatus(),
 					movieDetails.getPoster_path() != null ?
 						"https://image.tmdb.org/t/p/w500" + movieDetails.getPoster_path() : null
 				);
@@ -93,13 +94,15 @@ public class MovieService {
 	}
 
 	private MovieResponseDto convertToMovieResponseDto(Movie movie) {
+		boolean isRunning = isMovieCurrentlyRunning(movie.getId());
 		return new MovieResponseDto(
 			movie.getId(),
 			movie.getTitle(),
 			movie.getProductionYear(),
 			movie.getGenre(),
 			movie.getMoviePosterUrl(),
-			movie.getDuration()
+			movie.getDuration(),
+			isRunning
 		);
 	}
 
@@ -122,10 +125,10 @@ public class MovieService {
 		dto.setOverview(movie.getContent());
 		dto.setRelease_date(movie.getProductionYear());
 		dto.setRuntime(movie.getDuration());
-		dto.setStatus(movie.getStatus());
 		dto.setGenres(movie.getGenre());
 		dto.setPoster_path(movie.getMoviePosterUrl());
 		dto.setTrailerUrl(movie.getTrailerUrl());
+		dto.setRunning(isMovieCurrentlyRunning(movie.getId()));
 		return dto;
 	}
 
@@ -134,5 +137,15 @@ public class MovieService {
 		movieRepository.deleteById(movieId);
 	}
 
+	public boolean isMovieCurrentlyRunning(Long movieId) {
+		return runTimeRepository.existsByMovieId(movieId); // 해당 영화가 상영 중인지 확인
+	}
 
+	public List<MovieResponseDto> getCurrentlyPlayingMovies() {
+		List<Movie> movies = movieRepository.findCurrentlyPlayingMovies();
+		return movies.stream()
+			.map(movie -> new MovieResponseDto(movie.getId(), movie.getTitle(), movie.getProductionYear(),
+				movie.getGenre(), movie.getMoviePosterUrl(), movie.getDuration(),true))
+			.collect(Collectors.toList());
+	}
 }

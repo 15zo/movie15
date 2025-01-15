@@ -12,14 +12,16 @@ public class MovieResponseDto {
 	private String genre; // 장르
 	private String posterUrl; // 영화 포스터 URL
 	private Integer duration; // 상영 시간 (분)
+	private boolean running;
 
 	public MovieResponseDto(Long id, String title, String productionYear, String genre,
-		 String posterUrl, Integer duration) {
+		 String posterUrl, Integer duration, boolean running) {
 		this.id = id;
 		this.title = title;
 		this.productionYear = productionYear;
 		this.genre = genre;
 		this.posterUrl = posterUrl;
 		this.duration = duration;
+		this.running = running;
 	}
 }

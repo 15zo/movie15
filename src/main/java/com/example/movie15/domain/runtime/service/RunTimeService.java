@@ -63,7 +63,7 @@ public class RunTimeService {
 		}
 
 		// 런타임 저장
-		RunTime runTime = new RunTime(cinemaHall, movie, requestDto.getDate(), requestDto.getStartTime(), endTime);
+		RunTime runTime = new RunTime(cinemaHall, movie, requestDto.getDate(), requestDto.getStartTime(), endTime, requestDto.getPrice());
 		RunTime savedRunTime = runTimeRepository.save(runTime);
 
 		return RunTimeResponseDto.toDto(savedRunTime);
@@ -83,15 +83,15 @@ public class RunTimeService {
 			.collect(Collectors.toList());
 	}
 
-	public List<SeatDto> getSeatsByRunTime(Long runTimeId) {
-		List<Seat> seats = seatRepository.findSeatsByRunTimeId(runTimeId);
+	public List<SeatDto> getSeatsByRunTime(Long runtimeId) {
+		List<Seat> seats = seatRepository.findSeatsByRunTimeId(runtimeId);
 
 		return seats.stream()
 			.map(seat -> new SeatDto(
 				seat.getId(),
 				seat.getFormattedSeatNumber(),
 				seat.getStatus(),
-				seat.getType()
+				seat.getType().name()
 			))
 			.collect(Collectors.toList());
 	}

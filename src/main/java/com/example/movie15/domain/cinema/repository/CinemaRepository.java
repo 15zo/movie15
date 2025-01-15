@@ -27,6 +27,6 @@ public interface CinemaRepository extends JpaRepository<Cinema, Long> {
 	@Query("SELECT COUNT(ch) > 0 FROM CinemaHall ch WHERE ch.cinema.id = :cinemaId AND ch.hall.id = :hallId")
 	boolean existsRelation(@Param("cinemaId") Long cinemaId, @Param("hallId") Long hallId);
 
-	@Query("SELECT c.name FROM Cinema c WHERE c.location = :location")
-	List<String> findByLocation(@Param("location") String location);
+	@Query("SELECT c FROM Cinema c JOIN FETCH c.cinemaHalls ch JOIN FETCH ch.hall WHERE c.location = :location")
+	List<Cinema> findByLocation(@Param("location") String location);
 }

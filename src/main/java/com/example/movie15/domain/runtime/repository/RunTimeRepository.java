@@ -47,4 +47,8 @@ public interface RunTimeRepository extends JpaRepository<RunTime, Long> {
 		return findById(runtimeId).orElseThrow(()->new NotFoundException(ExceptionType.RUN_TIME_NOT_FOUND));
 
 	}
+
+	@Query("SELECT CASE WHEN COUNT(rt) > 0 THEN true ELSE false END " +
+		"FROM RunTime rt WHERE rt.movie.id = :movieId AND rt.date >= CURRENT_DATE")
+	boolean existsByMovieId(@Param("movieId") Long movieId);
 }

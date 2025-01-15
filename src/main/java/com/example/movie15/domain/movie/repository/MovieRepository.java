@@ -20,7 +20,9 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 		return findById(movieId).orElseThrow(()-> new NotFoundException(ExceptionType.MOVIE_NOT_FOUND));
 	}
 
-	@Query("SELECT new com.example.movie15.domain.movie.dto.MovieResponseDto(m.id, m.title, m.productionYear, m.genre, m.moviePosterUrl, m.duration) " +
+	@Query("SELECT new com.example.movie15.domain.movie.dto.MovieResponseDto( " +
+		"m.id, m.title, m.productionYear, m.genre, m.moviePosterUrl, m.duration, " +
+		"CASE WHEN EXISTS (SELECT rt FROM RunTime rt WHERE rt.movie.id = m.id) THEN true ELSE false END ) " +
 		"FROM Movie m")
 	Page<MovieResponseDto> findAllMoviesWithPagination(Pageable pageable);
 
@@ -28,4 +30,10 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 		   "WHERE (:title IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', : title, '%'))) " +
 		   "AND (:genre IS NULL OR LOWER(m.genre) LIKE LOWER(CONCAT('%', :genre, '%')))")
 	Page<Movie> searchMovies(String title, String genre, Pageable pageable);
+
+	@Query("SELECT DISTINCT m FROM Movie m " +
+		"JOIN RunTime r ON m.id = r.movie.id " +
+		"WHERE r.date >= CURRENT_DATE " +
+		"AND (r.startTime <= CURRENT_TIME AND r.endTime >= CURRENT_TIME)")
+	List<Movie> findCurrentlyPlayingMovies();
 }

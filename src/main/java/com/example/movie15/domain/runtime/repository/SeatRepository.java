@@ -13,6 +13,6 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 	@Query("SELECT s FROM Seat s " +
 		"JOIN CinemaHall ch ON s.hall.id = ch.hall.id " +
 		"JOIN RunTime rt ON rt.cinemaHall.id = ch.id " +
-		"WHERE rt.id = :runTimeId")
-	List<Seat> findSeatsByRunTimeId(@Param("runTimeId") Long runTimeId);
+		"WHERE rt.id = :runtimeId")
+	List<Seat> findSeatsByRunTimeId(@Param("runtimeId") Long runtimeId);
 }

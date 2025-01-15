@@ -2,6 +2,7 @@ package com.example.movie15.domain.runtime.entity;
 
 import com.example.movie15.domain.booking.entity.BookingSeat;
 import com.example.movie15.domain.cinema.entity.Hall;
+import com.example.movie15.domain.runtime.model.SeatType;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,8 +28,9 @@ public class Seat {
     @Column(nullable = false)
     private Integer colNum; // 열 번호
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String type; // 좌석 타입 (예: 일반석, VIP석)
+    private SeatType type; // 좌석 타입 (예: 일반석, VIP석)
 
     @Column(nullable = false)
     private Boolean status; // 예약 가능 여부

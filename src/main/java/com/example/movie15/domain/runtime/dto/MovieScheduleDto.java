@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class MovieScheduleDto {
-	private Long cinemaId;
+	private Long runtimeId;
 	private String hallName;      // 상영관 이름
 	private LocalTime startTime;  // 시작 시간
 	private LocalTime endTime;    // 종료 시간

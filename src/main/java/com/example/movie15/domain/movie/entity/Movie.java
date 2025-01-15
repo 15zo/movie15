@@ -1,5 +1,8 @@
 package com.example.movie15.domain.movie.entity;
 
+import java.util.List;
+
+import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,9 +29,6 @@ public class Movie extends BaseEntity {
     @Column(length = 30)
     private String genre; // 장르
 
-    @Column(length = 10)
-    private String status; // 상영 상태 (e.g., 'Released')
-
     @Column
     private String moviePosterUrl; // 영화 포스터
 
@@ -38,14 +38,16 @@ public class Movie extends BaseEntity {
     @Column
     private Integer duration; // 상영 시간 (분)
 
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RunTime> runTimes;
+
     // 모든 필드를 초기화하는 생성자
-    public Movie(String title, String content, String productionYear, Integer duration, String genre, String status, String moviePosterUrl) {
+    public Movie(String title, String content, String productionYear, Integer duration, String genre, String moviePosterUrl) {
         this.title = title;
         this.content = content;
         this.productionYear = productionYear;
         this.duration = duration;
         this.genre = genre;
-        this.status = status;
         this.moviePosterUrl = moviePosterUrl;
     }
 

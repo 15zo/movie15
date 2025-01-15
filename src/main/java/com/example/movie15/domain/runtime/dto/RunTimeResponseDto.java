@@ -19,6 +19,7 @@ public class RunTimeResponseDto {
 	private LocalDate date;
 	private LocalTime startTime;
 	private LocalTime endTime;
+	private int price;
 
 	public static RunTimeResponseDto toDto(RunTime runTime) {
 		// Cinema 이름 가져오기
@@ -31,7 +32,8 @@ public class RunTimeResponseDto {
 			runTime.getMovie().getTitle(),
 			runTime.getDate(),
 			runTime.getStartTime(),
-			runTime.getEndTime()
+			runTime.getEndTime(),
+			runTime.getPrice()
 		);
 	}
 }

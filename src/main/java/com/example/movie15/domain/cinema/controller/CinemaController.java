@@ -49,8 +49,8 @@ public class CinemaController {
 
 	//지역별 영화관 검색
 	@GetMapping
-	public ResponseEntity<List<String>> findByLocationWithCinemas(@RequestParam String location) {
-		List<String> cinemas = cinemaService.findByLocationWithCinemas(location);
+	public ResponseEntity<List<CinemaResponseDto>> findByLocationWithCinemas(@RequestParam String location) {
+		List<CinemaResponseDto> cinemas = cinemaService.findByLocationWithCinemas(location);
 		return ResponseEntity.status(HttpStatus.OK).body(cinemas);
 	}
 
@@ -61,6 +61,12 @@ public class CinemaController {
 		return ResponseEntity.status(HttpStatus.OK).body(cinemas);
 	}
 
+	//영화관 삭제
+	@DeleteMapping("/{cinemaId}")
+	public ResponseEntity<String> deleteCinema(@PathVariable Long cinemaId) {
+		cinemaService.deleteCinema(cinemaId);
+		return ResponseEntity.status(HttpStatus.OK).body("삭제 되었습니다");
+	}
 
 
 }

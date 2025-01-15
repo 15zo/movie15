@@ -41,12 +41,16 @@ public class RunTime {
 	@Column(nullable = false)
 	private LocalDate date; // 상영 날짜
 
-	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime) {
+	@Column(nullable = false)
+	private int price;
+
+	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,int price) {
 		this.cinemaHall = cinemaHall;
 		this.movie = movie;
 		this.date = date;
 		this.startTime = startTime;
 		this.endTime = endTime;
+		this.price = price;
 	}
 
 	public RunTime() {
