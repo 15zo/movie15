@@ -33,24 +33,22 @@ public class InquiryService {
         return mapToResponseDto(savedInquiry);
     }
 
-    // 문의 사항 조회(사용자)
+    // 문의 사항 조회(사용자 본인)
     public Page<InquiryResponseDto> getUserInquiries(Long userId, Pageable pageable) {
         Page<Inquiry> inquiries = inquiryRepository.findAllByUserId(userId, pageable);
         return inquiries.map(this::mapToResponseDto);
     }
 
     // 문의 사항 전체 조회(관리자)
-    public Page<InquiryResponseDto> getAllInquiries(int page, int size) {
-        Pageable pageable = PageRequest.ofSize(size).withPage(page);
-        return inquiryRepository.findAll(pageable)
-                .map(this::mapToResponseDto);
+    public Page<InquiryResponseDto> getAllInquiries(Pageable pageable) {
+        Page<Inquiry> inquiries = inquiryRepository.findAll(pageable);
+        return inquiries.map(this::mapToResponseDto);
     }
 
-    // 문의 사항 단일 조회(관리자)
-    public InquiryResponseDto getInquiry(Long id) {
-        Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
-        return mapToResponseDto(inquiry);
+    // 문의 사항 조회(관리자 -> 특정 사용자)
+    public Page<InquiryResponseDto> getInquiriesByUserIdForAdmin(Long userId, Pageable pageable) {
+        Page<Inquiry> inquiries = inquiryRepository.findAllByUserId(userId, pageable);
+        return inquiries.map(this::mapToResponseDto);
     }
 
     @Transactional
@@ -73,17 +71,21 @@ public class InquiryService {
     }
 
     // 문의 사항 삭제(사용자)
+    @Transactional
     public void deleteInquiry(Long id, String token) {
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
 
         Long userId = jwtProvider.getUserId(token);
 
-        validateUserAccess(inquiry, userId);
+        if (!inquiry.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("해당 문의에 접근할 권한이 없습니다.");
+        }
 
         if (inquiry.isAnswered()) {
             throw new IllegalArgumentException("답변이 완료된 문의는 삭제할 수 없습니다.");
         }
+
         inquiryRepository.delete(inquiry);
     }
 
@@ -94,19 +96,13 @@ public class InquiryService {
         inquiryRepository.delete(inquiry);
     }
 
-    public void updateInquiryStatus(Long id, String status) {
+    @Transactional
+    public void updateInquiryStatus(Long id, InquiryStatus status) {
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
 
-        InquiryStatus newStatus = InquiryStatus.valueOf(status);
-        inquiry.changeStatus(newStatus);
+        inquiry.changeStatus(status);
         inquiryRepository.save(inquiry);
-    }
-
-    private void validateUserAccess(Inquiry inquiry, Long userId) {
-        if (!inquiry.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("해당 문의에 접근할 권한이 없습니다.");
-        }
     }
 
     private InquiryResponseDto mapToResponseDto(Inquiry inquiry) {
