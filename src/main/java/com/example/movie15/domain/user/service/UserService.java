@@ -84,9 +84,14 @@ public class UserService {
     }
 
     public JwtAuthResponse login(LoginRequestDto loginRequestDto) {
-        Optional<User> user = userRepository.findByEmail(loginRequestDto.getEmail());
+        // 이메일로 사용자 조회
+        User user = userRepository.findByEmail(loginRequestDto.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "유효하지 않은 이메일이거나 잘못된 비밀번호입니다."
+                ));
 
-        if (user.isEmpty() || !passwordEncoder.matches(loginRequestDto.getPassword(), user.get().getPassword()) || user.get().isDeleted() == true) {
+        // 비밀번호 검증 및 삭제된 사용자 체크
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword()) || user.isDeleted()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 이메일이거나 잘못된 비밀번호입니다.");
         }
 
@@ -98,7 +103,8 @@ public class UserService {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String accessToken = this.jwtProvider.generateToken(authentication);
+        // JWT 토큰 생성
+        String accessToken = this.jwtProvider.generateToken(authentication, user.getId());
 
         return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken);
     }

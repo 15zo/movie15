@@ -75,7 +75,7 @@ class UserServiceTest {
 
         Authentication authentication = mock(Authentication.class);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        when(jwtProvider.generateToken(authentication)).thenReturn("mock-jwt-token");
+        when(jwtProvider.generateToken(authentication, mockUser.getId())).thenReturn("mock-jwt-token");
 
         // When: 로그인 메서드 호출
         JwtAuthResponse response = userService.login(loginRequestDto);

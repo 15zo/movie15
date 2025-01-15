@@ -26,7 +26,7 @@ public class JwtProvider {
     private String secret;
 
     @Getter
-    @Value("${jwt.expiry-millis:600}")  // 토큰 만료 시간: 30분
+    @Value("${jwt.expiry-millis}")
     private long expiryMillis;
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -46,7 +46,7 @@ public class JwtProvider {
 
     // 2. 토큰 생성 메소드
     // JWT 토큰 생성
-    public String generateToken(Authentication authentication) {
+    public String generateToken(Authentication authentication, Long userId) {
         String username = authentication.getName();
         String role = authentication.getAuthorities().stream()
                 .map(authority -> authority.getAuthority())
@@ -57,9 +57,10 @@ public class JwtProvider {
         Date expireDate = new Date(currentDate.getTime() + this.expiryMillis);
 
         return Jwts.builder()
-                .subject(username)
+                .subject(String.valueOf(userId))
                 .issuedAt(currentDate)
                 .expiration(expireDate)
+                .claim("username", username)
                 .claim("role", role)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
@@ -115,10 +116,16 @@ public class JwtProvider {
     }
 
     // 4. JWT 클레임 및 속성 처리 메소드
+    // 토큰에서 사용자 ID 추출
+    public Long getUserId(String token) {
+        Claims claims = this.getClaims(token);
+        return Long.valueOf(claims.getSubject());
+    }
+
     // 토큰에서 사용자 이름 추출
     public String getUsername(String token) {
         Claims claims = this.getClaims(token);
-        return claims.getSubject();
+        return claims.get("username", String.class);
     }
 
     // 임시 토큰 여부 확인
