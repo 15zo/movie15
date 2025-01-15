@@ -54,11 +54,9 @@ public class InquiryService {
     }
 
     @Transactional
-    public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, String token) {
+    public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, Long userId) {
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
-
-        Long userId = jwtProvider.getUserId(token);
 
         if (inquiry.isAnswered()) {
             throw new IllegalStateException("이미 답변된 문의는 수정할 수 없습니다.");
