@@ -3,10 +3,9 @@ package com.example.movie15.domain.email.scheduler;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.joda.time.LocalDateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
