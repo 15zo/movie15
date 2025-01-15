@@ -46,4 +46,5 @@ public class RunTime {
 		this.startTime = startTime;
 		this.endTime = endTime;
 	}
+	public RunTime() {}
 }
