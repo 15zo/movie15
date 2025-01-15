@@ -77,8 +77,19 @@ tmdb:
   # rabbitmq
   # docker 를 이용해서 rabbitmq 실행
   # docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management -> rabbitmq 띄우기
-  # 로컬 브라우저에서 http://localhost:15672 접속 후 guest / guest 로 로그인
-  # docker exec -it rabbitmq bash   => rabbitmq 내부로 접속
+
+  # delay-message 플러그인 다운로드 => https://github.com/rabbitmq/rabbitmq-delayed-message-exchange
+
+  # 플러그인 카피 => 경로 각자 바뀔수있으니 경로확인
+  # docker cp /Users/kimmyungho/Downloads/rabbitmq_delayed_message_exchange-4.0.2.ez \
+  # rabbitmq:/plugins/
+
+  # 도커 내부 접속
+  # docker exec -it rabbitmq bash
+
+  # 복사한 플러그인 활성화
+  # rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+
   # rabbitmq-plugins list     => 플러그인 확인
   rabbitmq:
     host: localhost

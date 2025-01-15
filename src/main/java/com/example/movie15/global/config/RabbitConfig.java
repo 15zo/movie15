@@ -15,6 +15,32 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class RabbitConfig {
 
+    // 1. RabbitMQ 연결 및 템플릿 설정
+    /**
+     * RabbitMQ와 연결할 ConnectionFactory 설정
+     * @return ConnectionFactory 객체
+     */
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        log.info("RabbitMQ 연결 구성 중");
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
+        connectionFactory.setUsername("guest");
+        connectionFactory.setPassword("guest");
+        return connectionFactory;
+    }
+
+    /**
+     * RabbitTemplate 설정
+     * @param connectionFactory RabbitMQ 연결 팩토리
+     * @return RabbitTemplate 객체
+     */
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        log.info("RabbitTemplate 생성 중");
+        return new RabbitTemplate(connectionFactory);
+    }
+
+    // 2. 교환 및 큐 생성
     /**
      * Delayed Exchange 설정
      * @return CustomExchange 객체
@@ -45,6 +71,27 @@ public class RabbitConfig {
     }
 
     /**
+     * chargeQueue 생성
+     * @return Queue 객체
+     */
+    @Bean
+    public Queue chargeQueue() {
+        log.info("chargeQueue 생성 중");
+        return new Queue("chargeQueue", true);
+    }
+
+    /**
+     * cancelQueue 생성
+     * @return Queue 객체
+     */
+    @Bean
+    public Queue cancelQueue() {
+        log.info("cancelQueue 생성 중");
+        return new Queue("cancelQueue", true);
+    }
+
+    // 3. 바인딩 설정
+    /**
      * Delayed Exchange 와 Email Queue 바인딩
      * @param emailDelayQueue 큐
      * @param delayedExchange 딜레이 익스체인지
@@ -58,29 +105,5 @@ public class RabbitConfig {
                 .to(delayedExchange)
                 .with("emailKey")
                 .noargs();
-    }
-
-    /**
-     * RabbitMQ와 연결할 ConnectionFactory 설정
-     * @return ConnectionFactory 객체
-     */
-    @Bean
-    public ConnectionFactory connectionFactory() {
-        log.info("RabbitMQ 연결 구성 중");
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
-        connectionFactory.setUsername("guest");
-        connectionFactory.setPassword("guest");
-        return connectionFactory;
-    }
-
-    /**
-     * RabbitTemplate 설정
-     * @param connectionFactory RabbitMQ 연결 팩토리
-     * @return RabbitTemplate 객체
-     */
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        log.info("RabbitTemplate 생성 중");
-        return new RabbitTemplate(connectionFactory);
     }
 }
