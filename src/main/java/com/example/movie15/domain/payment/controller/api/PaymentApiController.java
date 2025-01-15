@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api/payment")
 public class PaymentApiController {
 
 	@Value("${payment.toss.secretKey}")
@@ -47,9 +48,8 @@ public class PaymentApiController {
 
 	private final PaymentService paymentService;
 
-	@PostMapping( "/v1/toss/confirm")
+	@PostMapping( "/toss/confirm")
 	public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody String jsonBody) throws Exception {
-
 
 		JSONObject response = sendRequest(parseRequestData(jsonBody), secretKey, "https://api.tosspayments.com/v1/payments/confirm");
 		int statusCode = response.containsKey("error") ? 400 : 200;
