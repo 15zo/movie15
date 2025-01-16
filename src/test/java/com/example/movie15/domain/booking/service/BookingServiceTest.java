@@ -29,6 +29,7 @@ import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.ion.Decimal;
 
 @SpringBootTest
 @Slf4j
@@ -65,13 +66,13 @@ class BookingServiceTest {
 		Movie movie = new Movie("title", "content", "2020", 10, "genre", "status", "movieUrl");
 		movieRepository.save(movie);
 
-		RunTime runTime = new RunTime(hall, movie, LocalDate.now(), LocalTime.now(), LocalTime.now());
+		RunTime runTime = new RunTime(hall, movie, LocalDate.now(), LocalTime.now(), LocalTime.now(), Decimal.valueOf(10000));
 
 		runTimeRepository.save(runTime);
 
 		User user = userRepository.findByIdOrElseThrow(1L);
 
-		Booking booking = new Booking(BookingStatus.PENDING, null, runTime, user, findSeatList);
+		Booking booking = new Booking(BookingStatus.PENDING, runTime, user, findSeatList);
 		bookingRepository.save(booking);
 
 	}
