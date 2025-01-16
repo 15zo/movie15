@@ -52,7 +52,7 @@ public class RunTime {
 	@Column(nullable = false)
 	private BigDecimal amount;
 
-	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,BigDecimal price) {
+	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,BigDecimal amount) {
 		this.cinemaHall = cinemaHall;
 		this.movie = movie;
 		this.date = date;

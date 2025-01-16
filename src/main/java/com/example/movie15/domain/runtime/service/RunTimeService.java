@@ -44,6 +44,13 @@ public class RunTimeService {
 		hallRepository.findByIdOrElseThrow(requestDto.getHallId());
 		Movie movie = movieRepository.findByIdOrElseThrow(requestDto.getMovieId());
 
+		// 등록 날짜가 현재일로부터 일주일 내인지 검증
+		LocalDate today = LocalDate.now(); // 현재 날짜
+		LocalDate maxDate = today.plusDays(7); // 현재일로부터 7일 후
+		if (requestDto.getDate().isBefore(today) || requestDto.getDate().isAfter(maxDate)) {
+			throw new BadValueException(ExceptionType.RUN_TIME_DATE_OUT_OF_RANGE);
+		}
+
 		// 유지보수 시간 추가
 		int maintenanceMinutes = 15; // 유지보수 시간
 		int runningTimeMinutes = movie.getRuntimeMinutes(); // 영화 런타임
