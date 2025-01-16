@@ -41,7 +41,13 @@ public class RabbitPaymentProducer {
                 "영화결제가 완료되었습니다.",
                 "영화결제가 완료되었습니다! 시간에 맞춰 입장해주세요!"
         );
-        sendQueue(QueueBindings.CHARGE_QUEUE_KEY, emailMessage);
+        sendQueue(
+                QueueBindings.BASE_EXCHANGE,
+                QueueBindings.CHARGE_QUEUE_KEY,
+                emailMessage,
+                0,
+                TEN_MINUTE
+        );
     }
 
     /**
@@ -70,7 +76,13 @@ public class RabbitPaymentProducer {
             log.info("Redis 에서 취소할 메시지를 찾을 수 없습니다. (예약 ID: {})", bookingId);
         }
 
-        sendQueue(QueueBindings.CANCEL_QUEUE_KEY, emailMessage);
+        sendQueue(
+                QueueBindings.BASE_EXCHANGE,
+                QueueBindings.CANCEL_QUEUE_KEY,
+                emailMessage,
+                0,
+                TEN_MINUTE
+        );
     }
 
     /**
@@ -115,15 +127,12 @@ public class RabbitPaymentProducer {
         // Redis 에 저장
         redisTemplate.opsForHash().put(RedisKey.REMINDER_KEY, bookingId, emailMessage); // 메인키 , 식별값 , 데이터
 
-        rabbitTemplate.convertAndSend(
+        sendQueue(
                 QueueBindings.DELAYED_EXCHANGE,
                 QueueBindings.EMAIL_DELAY_KEY,
                 emailMessage,
-                message -> {
-                    message.getMessageProperties().setDelayLong(delay);
-                    message.getMessageProperties().setExpiration(String.valueOf(expirationTime));
-                    return message;
-                }
+                delay,
+                expirationTime
         );
     }
 
@@ -133,15 +142,17 @@ public class RabbitPaymentProducer {
      * @param routingKey   큐로 메시지를 전송할 라우팅키
      * @param emailMessage 전송할 이메일 메시지
      */
-    private void sendQueue(String routingKey, EmailMessage emailMessage) {
+    private void sendQueue(String exchangeName, String routingKey, EmailMessage emailMessage, long delayTime, long expirationTime) {
         String userEmail = emailMessage.getUserEmail();
 
         try {
             rabbitTemplate.convertAndSend(
+                    exchangeName,
                     routingKey,
                     emailMessage,
                     message -> {
-                        message.getMessageProperties().setExpiration(String.valueOf(TEN_MINUTE));
+                        message.getMessageProperties().setDelayLong(delayTime);
+                        message.getMessageProperties().setExpiration(String.valueOf(expirationTime));
                         return message;
                     });
             log.info("RabbitMQ 메시지 전송 성공. (예약자: {})", userEmail);

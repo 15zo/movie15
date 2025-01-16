@@ -8,6 +8,7 @@ public final class QueueBindings {
 
     // Exchange 이름
     public static final String DELAYED_EXCHANGE = "delayedExchange";
+    public static final String BASE_EXCHANGE = "";
 
     // Routing Key 이름
     public static final String EMAIL_DELAY_KEY = "emailDelayKey";
