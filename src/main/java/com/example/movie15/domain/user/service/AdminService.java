@@ -4,8 +4,17 @@ import com.example.movie15.domain.user.dto.UserResponseDto;
 import com.example.movie15.domain.user.entity.Role;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
+import com.example.movie15.global.exception.BadValueException;
+import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.ForbiddenException;
+import com.example.movie15.global.exception.NotFoundException;
+import com.example.movie15.global.security.JwtProvider;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -18,99 +27,70 @@ import static com.example.movie15.domain.user.entity.QUser.user;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AdminService {
 
     private final UserRepository userRepository;
-
-    public AdminService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final JwtProvider jwtProvider;
 
     // 모든 유저 조회
-    public List<UserResponseDto> getAllUsers() {
+    public List<UserResponseDto> getAllUsers(String token) {
+        validateAdmin(token);
         List<User> users = userRepository.findAll();
-        if (users.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
-        }
         return users.stream()
                 .map(UserResponseDto::new)
-                .toList();
+                .toList();  // 유저가 없으면 빈 리스트 반환
     }
 
     // 유저 상세 조회
-    public UserResponseDto getUserDetails(Long id) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserRole = authentication.getAuthorities().stream()
-                .findFirst()
-                .map(grantedAuthority -> grantedAuthority.getAuthority())
-                .orElse(null);
-
-        if (!"ROLE_ADMIN".equals(currentUserRole)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
-        }
-
-        User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다.");
-        }
+    public UserResponseDto getUserDetails(Long userId, String token) {
+        validateAdmin(token);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
         return new UserResponseDto(user);
     }
 
     // 유저 권한 변경
-    public void updateUserRole(Long id, String newRole) {
-        if (!hasAdminRole()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
-        }
+    public void updateUserRole(Long userId, String newRole, String token) {
+        validateAdmin(token);
+        User user = userRepository.findById(userId).
+                orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
-        User user = userRepository.findById(id).orElseThrow(null);
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다.");
-        }
-
+        // newRole 값 검증
         if (newRole == null || newRole.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 값입니다.");
+            throw new BadValueException(ExceptionType.NOT_BLANK);
         }
 
-        boolean isValidRole = false;
-        for (Role role : Role.values()) {
-            if (role.name().equalsIgnoreCase(newRole)) {
-                isValidRole = true;
-                break;
-            }
+        // 역할 검증
+        Role role;
+        try {
+            role = Role.valueOf(newRole.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadValueException(ExceptionType.INVALID_USER_ROLE);
         }
 
-        if (!isValidRole) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 값입니다.");
-        }
-
-        Role role = Role.valueOf(newRole.toUpperCase());
         user.changeRole(role);
     }
 
     // 유저 삭제
-    public void deleteUser(Long id) {
+    public void deleteUser(Long userId, String token) {
+        validateAdmin(token);
 
-        if (!hasAdminRole()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
-        }
-
-        User user = userRepository.findById(id).orElseThrow(null);
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다.");
-        }
+        User user = userRepository.findById(userId).
+                orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
         user.updateIsDeleted();
         userRepository.save(user);
     }
 
-    // 관리자 권한 확인
-    private boolean hasAdminRole() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+    // JWT를 통한 토큰 유효성 검증 및 관리자 권한 검증
+    private void validateAdmin(String token) {
+        if (!jwtProvider.validToken(token)) {
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
-        return authentication.getAuthorities().stream()
-                .anyMatch(grantedAuthority -> "ROLE_ADMIN".equals(grantedAuthority.getAuthority()));
+
+        if (!jwtProvider.isAdmin(token)) {
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        }
     }
 }

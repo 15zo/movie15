@@ -164,7 +164,18 @@ public class JwtProvider {
         return this.resolveClaims(token, Claims::getExpiration);
     }
 
-    // 토큰에 입력 받은 로직 적용 및 결과 반환
+    // 주어진 JWT 토큰에서 role 정보 추출
+    public String getRoleFromToken(String token) {
+        return resolveClaims(token, claims -> claims.get("role", String.class));
+    }
+
+    // 주어진 JWT 토큰이 ADMIN 권한을 갖고 있는지 검증
+    public boolean isAdmin(String token) {
+        String role = getRoleFromToken(token);
+        return "ROLE_ADMIN".equals(role);
+    }
+
+    // 토큰에 입력된 로직을 적용 및 결과를 반환
     private <T> T resolveClaims(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = this.getClaims(token);
         return claimsResolver.apply(claims);
