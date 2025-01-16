@@ -1,6 +1,7 @@
 package com.example.movie15.domain.rabbitmq.listener;
 
 import com.example.movie15.domain.email.model.EmailMessage;
+import com.example.movie15.domain.rabbitmq.common.QueueBindings;
 import com.example.movie15.domain.rabbitmq.common.RedisKey;
 import com.example.movie15.domain.rabbitmq.service.RabbitEmailService;
 import lombok.RequiredArgsConstructor;
@@ -22,28 +23,8 @@ public class RabbitEmailListener  {
      * Delayed Queue 에서 이메일 메시지를 처리.
      * @param emailMessage 이메일 메시지
      */
-    @RabbitListener(queues = "emailDelayQueue")
-    public void receiveEmailMessage(EmailMessage emailMessage) {
-        processEmailMessage(emailMessage);
-    }
-
-    /**
-     * chargeQueue 에서 이메일 메시지를 처리.
-     * @param emailMessage 이메일 메시지
-     */
-    @RabbitListener(queues = "chargeQueue")
-    public void chargeEmailMessage(EmailMessage emailMessage) {
-        processEmailMessage(emailMessage);
-    }
-
-    /**
-     * cancelQueue 에서 이메일 메시지를 처리.
-     * 결제 취소된 예약에 대해 이메일을 보내기 전에 Redis 에서 해당 예약의 상태를 확인.
-     * @param emailMessage 이메일 메시지
-     */
-    @RabbitListener(queues = "cancelQueue")
-    public void cancelEmailMessage(EmailMessage emailMessage) {
-
+    @RabbitListener(queues = QueueBindings.EMAIL_DELAY_QUEUE)
+    public void delayEmailMessage(EmailMessage emailMessage) {
         long bookingId = emailMessage.getBookingId();
 
         // Redis 에서 EmailMessage 를 가져옴
@@ -55,8 +36,27 @@ public class RabbitEmailListener  {
             processEmailMessage(emailMessage);
         }
         else {
-            log.info("이미 결제취소한 메시지입니다. 이메일을 보내지 않습니다.");
+            log.info("결제가 취소된 메시지입니다. 이메일을 보내지 않습니다.");
         }
+    }
+
+    /**
+     * chargeQueue 에서 이메일 메시지를 처리.
+     * @param emailMessage 이메일 메시지
+     */
+    @RabbitListener(queues = QueueBindings.CHARGE_QUEUE)
+    public void chargeEmailMessage(EmailMessage emailMessage) {
+        processEmailMessage(emailMessage);
+    }
+
+    /**
+     * cancelQueue 에서 이메일 메시지를 처리.
+     * 결제 취소된 예약에 대해 이메일을 보내기 전에 Redis 에서 해당 예약의 상태를 확인.
+     * @param emailMessage 이메일 메시지
+     */
+    @RabbitListener(queues = QueueBindings.CANCEL_QUEUE)
+    public void cancelEmailMessage(EmailMessage emailMessage) {
+        processEmailMessage(emailMessage);
     }
 
     /**

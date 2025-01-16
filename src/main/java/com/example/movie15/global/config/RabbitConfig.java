@@ -1,5 +1,6 @@
 package com.example.movie15.global.config;
 
+import com.example.movie15.domain.rabbitmq.common.QueueBindings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -49,7 +50,7 @@ public class RabbitConfig {
     public CustomExchange delayedExchange() {
         log.info("delayedExchange 구성 중");
         return new CustomExchange(
-                "delayedExchange",
+                QueueBindings.DELAYED_EXCHANGE,
                 "x-delayed-message", // 지연 메시지를 위한 타입
                 true, // durable (서버 재시작 시 유지)
                 false // auto-delete (자동 삭제하지 않음)
@@ -67,7 +68,7 @@ public class RabbitConfig {
     @Bean
     public Queue emailDelayQueue() {
         log.info("emailDelayQueue 생성 중");
-        return new Queue("emailDelayQueue", true);
+        return new Queue(QueueBindings.EMAIL_DELAY_QUEUE, true);
     }
 
     /**
@@ -77,7 +78,7 @@ public class RabbitConfig {
     @Bean
     public Queue chargeQueue() {
         log.info("chargeQueue 생성 중");
-        return new Queue("chargeQueue", true);
+        return new Queue(QueueBindings.CHARGE_QUEUE, true);
     }
 
     /**
@@ -87,7 +88,7 @@ public class RabbitConfig {
     @Bean
     public Queue cancelQueue() {
         log.info("cancelQueue 생성 중");
-        return new Queue("cancelQueue", true);
+        return new Queue(QueueBindings.CANCEL_QUEUE, true);
     }
 
     // 3. 바인딩 설정
@@ -99,11 +100,11 @@ public class RabbitConfig {
      */
     @Bean
     public Binding emailDelayQueueBinding(Queue emailDelayQueue, CustomExchange delayedExchange) {
-        log.info("emailDelayQueue 를 delayedExchange 에 라우팅 키 ‘emailKey’로 바인딩");
+        log.info("emailDelayQueue 를 delayedExchange 에 라우팅 키 ‘emailDelayKey’로 바인딩");
         return BindingBuilder
                 .bind(emailDelayQueue)
                 .to(delayedExchange)
-                .with("emailKey")
+                .with(QueueBindings.EMAIL_DELAY_KEY)
                 .noargs();
     }
 }

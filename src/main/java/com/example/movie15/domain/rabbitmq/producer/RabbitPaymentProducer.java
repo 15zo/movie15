@@ -2,13 +2,13 @@ package com.example.movie15.domain.rabbitmq.producer;
 
 import com.example.movie15.domain.booking.entity.Booking;
 import com.example.movie15.domain.email.model.EmailMessage;
+import com.example.movie15.domain.rabbitmq.common.QueueBindings;
 import com.example.movie15.domain.rabbitmq.common.RedisKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -41,7 +41,7 @@ public class RabbitPaymentProducer {
                 "영화결제가 완료되었습니다.",
                 "영화결제가 완료되었습니다! 시간에 맞춰 입장해주세요!"
         );
-        sendQueue("chargeQueue", emailMessage, 0, TEN_MINUTE);
+        sendQueue(QueueBindings.CHARGE_QUEUE_KEY, emailMessage);
     }
 
     /**
@@ -70,7 +70,7 @@ public class RabbitPaymentProducer {
             log.info("Redis 에서 취소할 메시지를 찾을 수 없습니다. (예약 ID: {})", bookingId);
         }
 
-        sendQueue("cancelQueue", emailMessage, 0, TEN_MINUTE);
+        sendQueue(QueueBindings.CANCEL_QUEUE_KEY, emailMessage);
     }
 
     /**
@@ -105,33 +105,45 @@ public class RabbitPaymentProducer {
         }
 
         // 이메일 메시지 생성
-        String subject = "곧 영화가 시작합니다!";
-        String text = String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", movieStartTime);
-        EmailMessage emailMessage = createEmailMessage(bookingId, userEmail, subject, text);
+        EmailMessage emailMessage = createEmailMessage(
+                bookingId,
+                userEmail,
+                "곧 영화가 시작합니다!",
+                String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", movieStartTime)
+        );
 
         // Redis 에 저장
         redisTemplate.opsForHash().put(RedisKey.REMINDER_KEY, bookingId, emailMessage); // 메인키 , 식별값 , 데이터
 
-        sendQueue("delayedExchange", emailMessage, delay, expirationTime);
+        rabbitTemplate.convertAndSend(
+                QueueBindings.DELAYED_EXCHANGE,
+                QueueBindings.EMAIL_DELAY_KEY,
+                emailMessage,
+                message -> {
+                    message.getMessageProperties().setDelayLong(delay);
+                    message.getMessageProperties().setExpiration(String.valueOf(expirationTime));
+                    return message;
+                }
+        );
     }
 
     /**
      * RabbitMQ 큐에 메시지를 전송하는 메소드
      *
-     * @param exchangeName 큐로 메시지를 전송할 Exchange 이름
+     * @param routingKey   큐로 메시지를 전송할 라우팅키
      * @param emailMessage 전송할 이메일 메시지
-     * @param delayTime 메시지 전송 지연 시간 (밀리초)
-     * @param expirationTime 메시지 만료 시간 (밀리초)
      */
-    private void sendQueue(String exchangeName, EmailMessage emailMessage, long delayTime, long expirationTime) {
+    private void sendQueue(String routingKey, EmailMessage emailMessage) {
         String userEmail = emailMessage.getUserEmail();
 
         try {
-            rabbitTemplate.convertAndSend(exchangeName, emailMessage, message -> {
-                message.getMessageProperties().setDelayLong(delayTime);
-                message.getMessageProperties().setExpiration(String.valueOf(expirationTime));
-                return message;
-            });
+            rabbitTemplate.convertAndSend(
+                    routingKey,
+                    emailMessage,
+                    message -> {
+                        message.getMessageProperties().setExpiration(String.valueOf(TEN_MINUTE));
+                        return message;
+                    });
             log.info("RabbitMQ 메시지 전송 성공. (예약자: {})", userEmail);
         } catch (Exception e) {
             log.error("RabbitMQ 메시지 전송 실패. (예약자: {})", userEmail, e);
@@ -143,8 +155,8 @@ public class RabbitPaymentProducer {
      *
      * @param bookingId 예약 ID
      * @param userEmail 이메일 수신자
-     * @param subject 이메일 제목
-     * @param text 이메일 본문 내용
+     * @param subject   이메일 제목
+     * @param text      이메일 본문 내용
      * @return 생성된 EmailMessage 객체
      */
     private EmailMessage createEmailMessage(long bookingId, String userEmail, String subject, String text) {
