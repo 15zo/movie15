@@ -20,7 +20,9 @@ public enum ExceptionType {
     CINEMA_NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없는 영화관입니다."),
     HALL_OR_CINEMA_NOT_FOUND(HttpStatus.NOT_FOUND,"삭제되었거나 존재하지않습니다." ),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 문의 사항을 찾을 수 없습니다." ),
-
+    INQUIRY_ALREADY_ANSWERED(HttpStatus.CONFLICT, "이미 답변된 문의는 수정하거나 삭제할 수 없습니다."),
+    INQUIRY_NO_CHANGES(HttpStatus.BAD_REQUEST, "변경된 내용이 없습니다."),
+    INQUIRY_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 문의 사항에 접근할 권한이 없습니다."),
 
     ;
 

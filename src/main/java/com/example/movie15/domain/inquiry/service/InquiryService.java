@@ -7,8 +7,7 @@ import com.example.movie15.domain.inquiry.enums.InquiryStatus;
 import com.example.movie15.domain.inquiry.repository.InquiryRepository;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
-import com.example.movie15.global.exception.ExceptionType;
-import com.example.movie15.global.exception.NotFoundException;
+import com.example.movie15.global.exception.*;
 import com.example.movie15.global.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -58,11 +57,11 @@ public class InquiryService {
                 .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         if (inquiry.isAnswered()) {
-            throw new IllegalStateException("이미 답변된 문의는 수정할 수 없습니다.");
+            throw new ConflictException(ExceptionType.INQUIRY_ALREADY_ANSWERED);
         }
 
         if (inquiry.getSubject().equals(dto.getSubject()) && inquiry.getContent().equals(dto.getContent())) {
-            throw new IllegalStateException("변경된 내용이 없습니다.");
+            throw new BadValueException(ExceptionType.INQUIRY_NO_CHANGES);
         }
 
         inquiry.update(dto.getSubject(), dto.getContent());
@@ -75,16 +74,16 @@ public class InquiryService {
     @Transactional
     public void deleteInquiry(Long id, String token) {
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         Long userId = jwtProvider.getUserId(token);
 
         if (!inquiry.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("해당 문의에 접근할 권한이 없습니다.");
+            throw new ForbiddenException(ExceptionType.INQUIRY_FORBIDDEN);
         }
 
         if (inquiry.isAnswered()) {
-            throw new IllegalArgumentException("답변이 완료된 문의는 삭제할 수 없습니다.");
+            throw new ConflictException(ExceptionType.INQUIRY_ALREADY_ANSWERED);
         }
 
         inquiryRepository.delete(inquiry);
@@ -93,14 +92,14 @@ public class InquiryService {
     // 문의 사항 삭제(관리자)
     public void deleteInquiryByAdmin(Long id) {
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
         inquiryRepository.delete(inquiry);
     }
 
     @Transactional
     public void updateInquiryStatus(Long id, InquiryStatus status) {
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         inquiry.changeStatus(status);
         inquiryRepository.save(inquiry);
