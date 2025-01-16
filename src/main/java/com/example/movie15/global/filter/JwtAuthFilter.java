@@ -44,6 +44,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // 화이트 리스트 경로는 필터를 생략
         if (isWhiteListed(request.getRequestURI())) {
             filterchain.doFilter(request, response);
+
             return;
         }
 
@@ -55,9 +56,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private boolean isWhiteListed(String path) {
         for (String whiteListedPath : WHITE_LIST) {
             if (path.startsWith(whiteListedPath)) {
+
                 return true;
             }
         }
+
         return false;
     }
 
