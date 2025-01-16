@@ -1,5 +1,7 @@
 package com.example.movie15.global.security;
 
+import com.example.movie15.global.exception.BadValueException;
+import com.example.movie15.global.exception.ExceptionType;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -9,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -26,7 +29,7 @@ public class JwtProvider {
     private String secret;
 
     @Getter
-    @Value("${jwt.expiry-millis:600}")  // 토큰 만료 시간: 30분
+    @Value("${jwt.expiry-millis}")
     private long expiryMillis;
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -46,10 +49,10 @@ public class JwtProvider {
 
     // 2. 토큰 생성 메소드
     // JWT 토큰 생성
-    public String generateToken(Authentication authentication) {
+    public String generateToken(Authentication authentication, Long userId) {
         String username = authentication.getName();
         String role = authentication.getAuthorities().stream()
-                .map(authority -> authority.getAuthority())
+                .map(GrantedAuthority::getAuthority)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("권한이 없습니다."));
 
@@ -57,9 +60,10 @@ public class JwtProvider {
         Date expireDate = new Date(currentDate.getTime() + this.expiryMillis);
 
         return Jwts.builder()
-                .subject(username)
+                .subject(String.valueOf(userId))
                 .issuedAt(currentDate)
                 .expiration(expireDate)
+                .claim("username", username)
                 .claim("role", role)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
@@ -99,6 +103,14 @@ public class JwtProvider {
         return false;
     }
 
+    // Authorization 헤더에서 Bearer 토큰 추출
+    public String extractToken(String header) {
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            return header.substring(7); // "Bearer " 이후의 토큰 반환
+        }
+        throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
+    }
+
     // 토큰이 무효화됐는지 확인
     public boolean isTokenInvalidated(String token) {
         return redisTemplate.hasKey(token);
@@ -115,10 +127,16 @@ public class JwtProvider {
     }
 
     // 4. JWT 클레임 및 속성 처리 메소드
+    // 토큰에서 사용자 ID 추출
+    public Long getUserId(String token) {
+        Claims claims = this.getClaims(token);
+        return Long.valueOf(claims.getSubject());
+    }
+
     // 토큰에서 사용자 이름 추출
     public String getUsername(String token) {
         Claims claims = this.getClaims(token);
-        return claims.getSubject();
+        return claims.get("username", String.class);
     }
 
     // 임시 토큰 여부 확인
@@ -157,7 +175,18 @@ public class JwtProvider {
         return this.resolveClaims(token, Claims::getExpiration);
     }
 
-    // 토큰에 입력 받은 로직 적용 및 결과 반환
+    // 주어진 JWT 토큰에서 role 정보 추출
+    public String getRoleFromToken(String token) {
+        return resolveClaims(token, claims -> claims.get("role", String.class));
+    }
+
+    // 주어진 JWT 토큰이 ADMIN 권한을 갖고 있는지 검증
+    public boolean isAdmin(String token) {
+        String role = getRoleFromToken(token);
+        return "ROLE_ADMIN".equals(role);
+    }
+
+    // 토큰에 입력된 로직을 적용 및 결과를 반환
     private <T> T resolveClaims(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = this.getClaims(token);
         return claimsResolver.apply(claims);
