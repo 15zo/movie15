@@ -17,6 +17,7 @@ import com.example.movie15.domain.booking.repository.BookingRepository;
 import com.example.movie15.domain.booking.repository.BookingSeatRepository;
 import com.example.movie15.domain.cinema.entity.Seat;
 import com.example.movie15.domain.cinema.repository.SeatRepository;
+import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.domain.runtime.repository.RunTimeRepository;
 import com.example.movie15.domain.user.entity.User;
@@ -45,7 +46,8 @@ public class BookingService {
 
 		// 예매 생성
 		List<Seat> seatList = seatRepository.findByIdList(requestDto.getBookingSeat());
-		Booking booking = new Booking(BookingStatus.PENDING, null, findRunTime, user, seatList);
+
+		Booking booking = new Booking(BookingStatus.PENDING, findRunTime, user, seatList);
 		bookingRepository.save(booking);
 
 		return BookingResponseDto.toDto(booking, findRunTime);

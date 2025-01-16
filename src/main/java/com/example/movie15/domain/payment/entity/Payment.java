@@ -32,6 +32,10 @@ public class Payment {
     public Payment() {
     }
 
+    public Payment(BigDecimal money) {
+        this.money = money;
+    }
+
     public Payment(BigDecimal money, String paymentKey, PaymentMethod paymentMethod, PaymentStatus paymentStatus) {
         this.money = money;
         this.paymentKey = paymentKey;

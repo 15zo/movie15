@@ -28,7 +28,8 @@ public class Seat {
     private Integer colNum; // 열 번호
 
     @Column(nullable = false, length = 20)
-    private String type; // 좌석 타입 (예: 일반석, VIP석)
+    @Enumerated(EnumType.STRING)
+    private  SeatType type; // 좌석 타입 (예: 일반석, VIP석)
 
     @Column(nullable = false)
     private Boolean status; // 예약 가능 여부

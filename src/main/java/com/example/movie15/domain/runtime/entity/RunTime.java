@@ -2,6 +2,7 @@ package com.example.movie15.domain.runtime.entity;
 
 import static jakarta.persistence.FetchType.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -17,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
+import software.amazon.ion.Decimal;
 
 @Entity
 @Getter
@@ -42,12 +44,16 @@ public class RunTime {
 	@Column(nullable = false)
 	private LocalDate date; // 상영 날짜
 
-	public RunTime(Hall hall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime) {
+	@Column(nullable = false)
+	private BigDecimal amount;  // 영화 가격
+
+	public RunTime(Hall hall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime, Decimal amount) {
 		this.hall = hall;
 		this.movie = movie;
 		this.date = date;
 		this.startTime = startTime;
 		this.endTime = endTime;
+		this.amount = amount;
 	}
 
 	public RunTime() {
