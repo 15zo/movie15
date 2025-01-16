@@ -3,7 +3,6 @@ package com.example.movie15.domain.rabbitmq.producer;
 import com.example.movie15.domain.booking.entity.Booking;
 import com.example.movie15.domain.email.model.EmailMessage;
 import com.example.movie15.domain.rabbitmq.common.RedisKey;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -25,9 +24,10 @@ public class RabbitPaymentProducer {
     private static final long TEN_MINUTE = 600000;
 
     /**
-     * 결제 완료 시 메시지를 큐에 전송
+     * 결제 완료 시 해당 예약에 대한 이메일 알림을 큐에 전송하는 메소드.
+     * 결제가 완료된 예약에 대한 이메일을 큐에 전송하고, 이메일의 주제와 본문을 설정.
      *
-     * @param booking Booking 객체
+     * @param booking 결제 완료된 예약 정보 (Booking 객체)
      */
     public void sendChargeEvent(Booking booking) {
 
@@ -45,9 +45,10 @@ public class RabbitPaymentProducer {
     }
 
     /**
-     * 결제 취소 시 메시지를 큐에 전송
+     * 결제 취소 시 해당 예약에 대한 이메일 알림을 큐에 전송하는 메소드.
+     * 결제 취소가 발생하면 해당 예약 ID에 대한 이메일을 큐에 전송하고, Redis 에서 예약된 이메일 정보를 삭제.
      *
-     * @param booking Booking 객체
+     * @param booking 취소된 예약 정보 (Booking 객체)
      */
     public void sendCancelEvent(Booking booking) {
 
@@ -73,9 +74,10 @@ public class RabbitPaymentProducer {
     }
 
     /**
-     * 예매시점에 "영화시작 30분 전 이메일 예약."
+     * 영화 시작 30분 전에 이메일을 예약하는 메소드.
+     * 영화 시작 30분 전 알림 이메일을 예약하여 사용자에게 전송.
      *
-     * @param booking 영화 예약 정보
+     * @param booking 영화 예약 정보 (Booking 객체)
      */
     public void movieStartReminderEmail(Booking booking) {
 
@@ -113,6 +115,14 @@ public class RabbitPaymentProducer {
         sendQueue("delayedExchange", emailMessage, delay, expirationTime);
     }
 
+    /**
+     * RabbitMQ 큐에 메시지를 전송하는 메소드
+     *
+     * @param exchangeName 큐로 메시지를 전송할 Exchange 이름
+     * @param emailMessage 전송할 이메일 메시지
+     * @param delayTime 메시지 전송 지연 시간 (밀리초)
+     * @param expirationTime 메시지 만료 시간 (밀리초)
+     */
     private void sendQueue(String exchangeName, EmailMessage emailMessage, long delayTime, long expirationTime) {
         String userEmail = emailMessage.getUserEmail();
 
@@ -128,6 +138,15 @@ public class RabbitPaymentProducer {
         }
     }
 
+    /**
+     * 이메일 메시지를 생성하는 메소드
+     *
+     * @param bookingId 예약 ID
+     * @param userEmail 이메일 수신자
+     * @param subject 이메일 제목
+     * @param text 이메일 본문 내용
+     * @return 생성된 EmailMessage 객체
+     */
     private EmailMessage createEmailMessage(long bookingId, String userEmail, String subject, String text) {
         return new EmailMessage(bookingId, userEmail, subject, text);
     }

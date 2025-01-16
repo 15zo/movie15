@@ -19,7 +19,7 @@ public class RabbitEmailListener  {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * Delayed Queue 에서 메시지를 처리
+     * Delayed Queue 에서 이메일 메시지를 처리.
      * @param emailMessage 이메일 메시지
      */
     @RabbitListener(queues = "emailDelayQueue")
@@ -28,7 +28,7 @@ public class RabbitEmailListener  {
     }
 
     /**
-     * 결제 큐에서 메시지를 처리
+     * chargeQueue 에서 이메일 메시지를 처리.
      * @param emailMessage 이메일 메시지
      */
     @RabbitListener(queues = "chargeQueue")
@@ -37,7 +37,8 @@ public class RabbitEmailListener  {
     }
 
     /**
-     * 결제취소 큐에서 메시지를 처리
+     * cancelQueue 에서 이메일 메시지를 처리.
+     * 결제 취소된 예약에 대해 이메일을 보내기 전에 Redis 에서 해당 예약의 상태를 확인.
      * @param emailMessage 이메일 메시지
      */
     @RabbitListener(queues = "cancelQueue")
@@ -58,7 +59,11 @@ public class RabbitEmailListener  {
         }
     }
 
-    // 공통메소드로 추출
+    /**
+     * 이메일 메시지를 처리하는 공통 메소드.
+     * 이메일 메시지를 발송하는 기능을 담당.
+     * @param emailMessage 이메일 메시지
+     */
     private void processEmailMessage(EmailMessage emailMessage) {
         String userEmail = emailMessage.getUserEmail();
         String subject = emailMessage.getSubject();
