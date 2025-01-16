@@ -35,7 +35,8 @@ public class RunTimeService {
 			movie,
 			requestDto.getDate(),
 			requestDto.getStartTime(),
-			requestDto.getEndTime()
+			requestDto.getEndTime(),
+			requestDto.getAmount()
 		);
 
 		RunTime savedRunTime = runTimeRepository.save(runTime);
