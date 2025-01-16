@@ -16,8 +16,11 @@ import java.util.List;
 
 import static jakarta.persistence.FetchType.LAZY;
 
+import org.hibernate.annotations.SQLDelete;
+
 @Entity
 @Getter
+@SQLDelete(sql = "UPDATE booking SET is_deleted = true WHERE id = ?")
 public class Booking {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +41,8 @@ public class Booking {
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeatList = new ArrayList<>();
 
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
+    private Boolean isDeleted = false;
 
     public void updateBookingStatus(BookingStatus bookingStatus, Payment payment) {
 
