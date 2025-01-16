@@ -44,6 +44,7 @@ public class UserService {
             throw new BadValueException(ExceptionType.EXIST_USER);
         }
 
+        // 암호화된 비밀번호를 엔티티 생성 시 바로 설정
         String encodedPassword = passwordEncoder.encode(userRequestDto.getPassword());
         User user = new User(userRequestDto.getEmail(), encodedPassword,userRequestDto.getName());
 
