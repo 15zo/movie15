@@ -32,11 +32,9 @@ public class Review extends BaseEntity {
      */
     public Review() {}
 
-    public Review(String comment, Integer rating, User user, Movie movie) {
+    public Review(String comment, Integer rating) {
         this.comment = comment;
         this.rating = rating;
-        this.user = user;
-        this.movie = movie;
     }
 
     /**
@@ -53,7 +51,15 @@ public class Review extends BaseEntity {
     /**
      * 연관관계 편의 메소드 - 반대쪽에는 연관관계 편의 메소드가 없도록 주의합니다.
      */
+    public void setUser(User user) {
+        this.user = user;
+        user.getReviewList().add(this);
+    }
 
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+        movie.getReviewList().add(this);
+    }
 
     /**
      * 서비스 메소드 - 외부에서 엔티티를 수정할 메소드를 정의합니다. (단일 책임을 가지도록 주의합니다.)
@@ -69,9 +75,18 @@ public class Review extends BaseEntity {
     }
 
     /**
-     * 테스트용 메소드
+     * 테스트용 생성자, 메소드
      */
+    public Review(String comment, Integer rating, User user, Movie movie) {
+        this.comment = comment;
+        this.rating = rating;
+        this.user = user;
+        this.movie = movie;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
+
+
 }

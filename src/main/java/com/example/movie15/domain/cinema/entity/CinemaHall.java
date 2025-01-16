@@ -27,6 +27,8 @@ public class CinemaHall {
 	@JoinColumn(name = "cinema_id", nullable = false)
 	private Cinema cinema;
 
+	// Hall 객체 반환
+	@Getter
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "hall_id", nullable = false)
 	private Hall hall;
@@ -34,5 +36,9 @@ public class CinemaHall {
 	public CinemaHall(Cinema cinema, Hall hall) {
 		this.cinema = cinema;
 		this.hall = hall;
+	}
+
+	public Hall getHall() {
+		return this.hall; // Hall 객체 반환
 	}
 }

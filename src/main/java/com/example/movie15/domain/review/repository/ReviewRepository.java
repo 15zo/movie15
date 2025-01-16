@@ -12,9 +12,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT r FROM Review r JOIN FETCH r.movie WHERE r.user.id = :userId")
     Page<Review> findAllByUserIdWithMovie(Long userId, Pageable pageable);
 
+    boolean existsByUserIdAndMovieId(Long userId, Long movieId);
+
     // 특정 영화 ID에 해당하는 리뷰 목록 조회. N+1 방지 (JOIN FETCH)
     @Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.movie.id = :movieId")
     Page<Review> findAllByMovieIdWithUser(Long movieId, Pageable pageable);
-
-    boolean existsByUserIdAndMovieId(Long userId, Long movieId);
 }

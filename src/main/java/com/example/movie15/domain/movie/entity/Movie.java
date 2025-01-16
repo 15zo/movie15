@@ -1,9 +1,16 @@
 package com.example.movie15.domain.movie.entity;
 
+import com.example.movie15.domain.review.entity.Review;
+import java.util.List;
+
+import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -26,9 +33,6 @@ public class Movie extends BaseEntity {
     @Column(length = 30)
     private String genre; // 장르
 
-    @Column(length = 10)
-    private String status; // 상영 상태 (e.g., 'Released')
-
     @Column
     private String moviePosterUrl; // 영화 포스터
 
@@ -38,14 +42,19 @@ public class Movie extends BaseEntity {
     @Column
     private Integer duration; // 상영 시간 (분)
 
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviewList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RunTime> runTimes;
+
     // 모든 필드를 초기화하는 생성자
-    public Movie(String title, String content, String productionYear, Integer duration, String genre, String status, String moviePosterUrl) {
+    public Movie(String title, String content, String productionYear, Integer duration, String genre, String moviePosterUrl) {
         this.title = title;
         this.content = content;
         this.productionYear = productionYear;
         this.duration = duration;
         this.genre = genre;
-        this.status = status;
         this.moviePosterUrl = moviePosterUrl;
     }
 
@@ -53,15 +62,7 @@ public class Movie extends BaseEntity {
         this.trailerUrl = trailerUrl;
     }
 
-    /**
-     * 테스트용 메소드
-     */
-    public void setId(Long id) {
-        this.id = id;
+    public int getRuntimeMinutes() {
+        return duration;
     }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
 }

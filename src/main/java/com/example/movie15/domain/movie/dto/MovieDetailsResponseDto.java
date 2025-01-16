@@ -1,7 +1,5 @@
 package com.example.movie15.domain.movie.dto;
 
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,8 +11,8 @@ public class MovieDetailsResponseDto {
 	private String overview; // 줄거리 (한국어)
 	private String release_date; // 개봉일
 	private Integer runtime; // 상영 시간
-	private String status; // 상영 상태
 	private String genres; // 장르 리스트 (한국어)
 	private String poster_path; // 포스터 경로
 	private String trailerUrl; // 예고편 경로
+	private boolean running; //현재 상영하고 있는지 여부
 }

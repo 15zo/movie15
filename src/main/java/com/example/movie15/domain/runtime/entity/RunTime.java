@@ -1,19 +1,28 @@
 package com.example.movie15.domain.runtime.entity;
 
+import static jakarta.persistence.FetchType.*;
+
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import javax.net.ssl.SSLSession;
+
+import com.example.movie15.domain.cinema.entity.CinemaHall;
 import com.example.movie15.domain.cinema.entity.Hall;
 import com.example.movie15.domain.movie.entity.Movie;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
+import software.amazon.ion.Decimal;
 
 @Entity
 @Getter
@@ -22,13 +31,14 @@ public class RunTime {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; // 상영 시간 고유 식별자
 
-	@ManyToOne
+	@ManyToOne(fetch = LAZY)
 	@JoinColumn(name = "movie_id", nullable = false)
 	private Movie movie; // 영화 ID 참조
 
+
 	@ManyToOne
-	@JoinColumn(name = "hall_id", nullable = false)
-	private Hall hall; // 상영관 참조
+	@JoinColumn(name = "cinema_hall_id", nullable = false) // CinemaHall 참조
+	private CinemaHall cinemaHall;
 
 	@Column(nullable = false)
 	private LocalTime startTime; // 상영 시작 시간
@@ -39,11 +49,20 @@ public class RunTime {
 	@Column(nullable = false)
 	private LocalDate date; // 상영 날짜
 
-	public RunTime(Hall hall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime) {
-		this.hall = hall;
+	@Column(nullable = false)
+	private BigDecimal amount;
+
+	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,BigDecimal amount) {
+		this.cinemaHall = cinemaHall;
 		this.movie = movie;
 		this.date = date;
 		this.startTime = startTime;
 		this.endTime = endTime;
+		this.amount = amount;
 	}
+
+	public RunTime() {
+
+	}
+
 }

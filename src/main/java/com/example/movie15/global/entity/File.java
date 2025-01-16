@@ -36,4 +36,5 @@ public class File extends BaseEntity {
         this.name = name;
     }
 
+    public File(){}
 }
