@@ -1,5 +1,7 @@
 package com.example.movie15.domain.runtime.entity;
 
+import static jakarta.persistence.FetchType.*;
+
 import com.example.movie15.domain.booking.entity.BookingSeat;
 import com.example.movie15.domain.cinema.entity.Hall;
 import com.example.movie15.domain.runtime.model.SeatType;
@@ -18,7 +20,7 @@ public class Seat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "hall_id", nullable = false) // 상영관과 다대일 관계
     private Hall hall;
 

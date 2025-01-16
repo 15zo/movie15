@@ -6,8 +6,6 @@ import com.example.movie15.global.entity.BaseEntity;
 import com.example.movie15.global.exception.ExceptionType;
 import com.example.movie15.global.exception.NotFoundException;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -53,27 +51,42 @@ public class Review extends BaseEntity {
     /**
      * 연관관계 편의 메소드 - 반대쪽에는 연관관계 편의 메소드가 없도록 주의합니다.
      */
-//    public void setUser(User user) {
-//        this.user = user;
-//        user.getReviews.add(this);
-//    }
-//
-//    public void setMovie(Movie movie) {
-//        this.movie = movie;
-//        movie.getReviews.add(this);
-//    }
+    public void setUser(User user) {
+        this.user = user;
+        user.getReviewList().add(this);
+    }
+
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+        movie.getReviewList().add(this);
+    }
 
     /**
      * 서비스 메소드 - 외부에서 엔티티를 수정할 메소드를 정의합니다. (단일 책임을 가지도록 주의합니다.)
      */
-    // TODO : 에러타입 수정해야함
     // 엔티티 수정 메소드
     public void updateReview(String comment, Integer rating) {
         if (Objects.equals(this.comment, comment) && Objects.equals(this.rating, rating)) {
-            throw new NotFoundException(ExceptionType.USER_NOT_FOUND); // 이미 같은 리뷰임.
+            throw new NotFoundException(ExceptionType.SAME_REVIEW); // 이미 같은 리뷰임.
         }
 
         this.comment = comment;
         this.rating = rating;
     }
+
+    /**
+     * 테스트용 생성자, 메소드
+     */
+    public Review(String comment, Integer rating, User user, Movie movie) {
+        this.comment = comment;
+        this.rating = rating;
+        this.user = user;
+        this.movie = movie;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+
 }

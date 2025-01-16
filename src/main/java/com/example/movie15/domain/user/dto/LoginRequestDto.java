@@ -17,4 +17,10 @@ public class LoginRequestDto {
             message = "비밀번호는 최소 8자 이상, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다."
     )
     private String password;
+
+    // 테스트용 생성자
+    public LoginRequestDto(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
 }

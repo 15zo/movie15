@@ -1,6 +1,6 @@
 package com.example.movie15.domain.user.service;
 
-import com.example.movie15.domain.email.EmailService.EmailSenderService;
+import com.example.movie15.domain.email.service.SignupEmailSenderService;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
 import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
@@ -10,6 +10,7 @@ import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.global.security.AuthenticationScheme;
 import com.example.movie15.global.security.JwtProvider;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,7 +32,7 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
-    private final EmailSenderService emailSenderService;
+    private final SignupEmailSenderService emailSenderService;
 
     @Transactional
     public void signup(UserRequestDto userRequestDto) throws MessagingException {
@@ -66,13 +67,7 @@ public class UserService {
 
     @Transactional
     public void updateUserInfo(Long userId, UpdateUserRequestDto updateUserRequestDto) {
-
         User user = userRepository.findByIdOrElseThrow(userId);
-
-        // 닉네임 업데이트
-        if (updateUserRequestDto.getNickname() != null && !updateUserRequestDto.getNickname().isBlank()) {
-            user.updateNickname(updateUserRequestDto.getNickname());
-        }
 
         // 비밀번호 업데이트
         if (updateUserRequestDto.getOldPassword() != null && updateUserRequestDto.getNewPassword() != null) {
@@ -138,6 +133,27 @@ public class UserService {
         if (tempToken != null && tempToken.startsWith("Bearer ")) {
             return tempToken.substring(7);
         }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함되어야 합니다.");
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다.");
+    }
+
+    @Transactional
+    public void logout(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그아웃을 하려면 먼저 로그인을 해야 합니다.");
+        }
+
+        String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다.");
+        }
+
+        String token = extractToken(authorizationHeader);
+
+        if (!jwtProvider.validToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+        }
+
+        jwtProvider.invalidateToken(token);
     }
 }

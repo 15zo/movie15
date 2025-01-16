@@ -1,5 +1,9 @@
 package com.example.movie15.domain.runtime.entity;
 
+import static jakarta.persistence.FetchType.*;
+
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -9,12 +13,14 @@ import com.example.movie15.domain.movie.entity.Movie;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
+import software.amazon.ion.Decimal;
 
 @Entity
 @Getter
@@ -23,7 +29,7 @@ public class RunTime {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; // 상영 시간 고유 식별자
 
-	@ManyToOne
+	@ManyToOne(fetch = LAZY)
 	@JoinColumn(name = "movie_id", nullable = false)
 	private Movie movie; // 영화 ID 참조
 
@@ -42,7 +48,7 @@ public class RunTime {
 	private LocalDate date; // 상영 날짜
 
 	@Column(nullable = false)
-	private int price;
+	private BigDecimal amount;
 
 	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,int price) {
 		this.cinemaHall = cinemaHall;
@@ -50,7 +56,7 @@ public class RunTime {
 		this.date = date;
 		this.startTime = startTime;
 		this.endTime = endTime;
-		this.price = price;
+		this.amount = amount;
 	}
 
 	public RunTime() {

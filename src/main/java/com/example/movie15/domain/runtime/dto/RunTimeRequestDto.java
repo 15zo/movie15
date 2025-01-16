@@ -5,6 +5,7 @@ import java.time.LocalTime;
 
 import lombok.Getter;
 import lombok.Setter;
+import software.amazon.ion.Decimal;
 
 @Getter
 @Setter
@@ -14,5 +15,6 @@ public class RunTimeRequestDto {
 	private Long movieId;      // 영화 ID
 	private LocalDate date;    // 상영 날짜
 	private LocalTime startTime; // 상영 시작 시간
-	private int price;
+	private LocalTime endTime;   // 상영 종료 시간
+	private Decimal amount; // 영화 금액
 }

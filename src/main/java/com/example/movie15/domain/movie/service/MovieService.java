@@ -3,6 +3,11 @@ package com.example.movie15.domain.movie.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.movie15.domain.movie.dto.MovieReviewsResponseDto;
+import com.example.movie15.domain.review.entity.Review;
+import com.example.movie15.domain.review.repository.ReviewRepository;
+import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,7 @@ public class MovieService {
 	private final MovieRepository movieRepository;
 	private final TmdbService tmdbService;
 	private final RunTimeRepository runTimeRepository;
+	private final ReviewRepository reviewRepository;
 
 	@Transactional
 	public Movie saveMovieFromTmdb(Long tmdbId) {
@@ -139,6 +145,32 @@ public class MovieService {
 
 	public boolean isMovieCurrentlyRunning(Long movieId) {
 		return runTimeRepository.existsByMovieId(movieId); // 해당 영화가 상영 중인지 확인
+	}
+	/**
+	 * 특정 영화에 대한 리뷰 목록을 조회하는 서비스 메서드.
+	 *
+	 * @param movieId 조회할 영화의 ID
+	 * @return 영화에 대한 모든 리뷰 목록. 리뷰가 없으면 빈 리스트를 반환.
+	 * @throws NotFoundException 영화가 존재하지 않으면 예외를 발생시킴.
+	 */
+	public Page<MovieReviewsResponseDto> findMovieReviews(Long movieId, Pageable pageable) {
+		// 영화찾기. 없으면 에러
+		if (!movieRepository.existsById(movieId)) {
+			throw new NotFoundException(ExceptionType.MOVIE_NOT_FOUND);
+		}
+
+		// 영화에 대한 리뷰 목록을 조회하고, 리뷰가 없으면 빈 리스트 반환
+		Page<Review> reviews = reviewRepository.findAllByMovieIdWithUser(movieId, pageable);
+		if (reviews.isEmpty()) {
+			return Page.empty();
+		}
+
+		return reviews
+				.map(review -> new MovieReviewsResponseDto(
+						review.getUser().getName(), // 유저이름
+						review.getComment(),            // 리뷰코멘트
+						review.getRating()              // 리뷰별점
+				));
 	}
 
 	public List<MovieResponseDto> getCurrentlyPlayingMovies() {

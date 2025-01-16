@@ -1,18 +1,15 @@
 package com.example.movie15.domain.user.controller;
 
 import com.example.movie15.domain.user.dto.*;
-import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.domain.user.service.UserService;
 import com.example.movie15.global.exception.CommonResponseBody;
-import com.example.movie15.global.security.service.UserDetailsImpl;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private final UserRepository userRepository;
 
     // 회원가입
     @PostMapping("/signup")
@@ -47,6 +43,13 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponseBody<>("로그인을 성공하였습니다.", authResponse));
     }
 
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        userService.logout(request);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("로그아웃을 성공하였습니다.");
+    }
+
     // 탈퇴 전 비밀번호 확인
     @PostMapping("/{userId}/check")
     public ResponseEntity<CommonResponseBody<JwtAuthResponse>> checkPassword(@PathVariable Long userId,
@@ -68,15 +71,4 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원탈퇴가 완료되었습니다.");
     }
-
-//    @GetMapping("/test")
-//    public String test(@AuthenticationPrincipal UserDetails userDetails){
-//        return userDetails.getUsername();
-//        userRepository.find(sdfs)
-//                결제레포지토리.findByUserID(id)
-//                        문의레포지토리.findbyUSer(0);
-//
-//        마이페이지리스폰스디티오(List<결제>, List<문의>)
-//    }
-
 }

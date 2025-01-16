@@ -18,35 +18,54 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.movie15.domain.payment.service.PaymentService;
+
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @Slf4j
+@RequiredArgsConstructor
+@RequestMapping("/api/payment")
 public class PaymentApiController {
 
 	@Value("${payment.toss.secretKey}")
 	private String secretKey;
 
-	@PostMapping( "/v1/toss/confirm")
-	public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody String jsonBody) throws Exception {
+	private final PaymentService paymentService;
 
+	@PostMapping( "/toss/confirm")
+	public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody String jsonBody) throws Exception {
 
 		JSONObject response = sendRequest(parseRequestData(jsonBody), secretKey, "https://api.tosspayments.com/v1/payments/confirm");
 		int statusCode = response.containsKey("error") ? 400 : 200;
 
 		return ResponseEntity.status(statusCode).body(response);
 	}
+
+	@PostMapping("/booking/{bookingId}/payment")
+	public ResponseEntity tossPaymentCancel(
+		@PathVariable Long bookingId,
+		@RequestParam String paymentKey,
+		@RequestParam String cancelReason
+	) {
+		return ResponseEntity.ok().body(paymentService.tossPaymentCancel(bookingId, paymentKey, cancelReason));
+	}
+
 
 	private JSONObject parseRequestData(String jsonBody) {
 		try {

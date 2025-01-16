@@ -1,5 +1,6 @@
 package com.example.movie15.domain.movie.entity;
 
+import com.example.movie15.domain.review.entity.Review;
 import java.util.List;
 
 import com.example.movie15.domain.runtime.entity.RunTime;
@@ -7,6 +8,9 @@ import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -37,6 +41,9 @@ public class Movie extends BaseEntity {
 
     @Column
     private Integer duration; // 상영 시간 (분)
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviewList = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RunTime> runTimes;

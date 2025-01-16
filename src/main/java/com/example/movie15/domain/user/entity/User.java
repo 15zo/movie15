@@ -1,14 +1,14 @@
 package com.example.movie15.domain.user.entity;
 
+import com.example.movie15.domain.review.entity.Review;
 import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.joda.time.LocalDateTime;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -26,7 +26,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Column(nullable = false, length = 10)
-    private String nickname;
+    private String name;
 
     @Column(nullable = false, length = 10)
     @Enumerated(value = EnumType.STRING)
@@ -38,33 +38,30 @@ public class User extends BaseEntity {
     private String verificationToken; // 이메일 인증 토큰
     private LocalDateTime tokenExpiryTime; // 인증토큰 만료 시간
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviewList = new ArrayList<>();
+
     // 회원가입용 생성자
-    public User(String email, String password, String nickname) {
+    public User(String email, String password, String name) {
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
+        this.name = name;
     }
 
     // 관리자 생성용 생성자
-    public User(String email, String password, String nickname, Role role) {
+    public User(String email, String password, String name, Role role) {
         this.email = email;
         this.password = password;
-        this.nickname = nickname;
+        this.name = name;
         this.role = role;
     }
 
     public void updateIsDeleted() {
-
         this.isDeleted = true;
     }
 
     public void updatePassword(String newPassword) {
-
         this.password = newPassword;
-    }
-
-    public void updateNickname(String newNickname) {
-        this.nickname = newNickname;
     }
 
     public void changeRole(Role newRole) {
@@ -84,6 +81,17 @@ public class User extends BaseEntity {
     // 인증토큰 만료시간 생성 (회원가입요청시간 + 10분)
     public void setTokenExpiryTime() {
         this.tokenExpiryTime = LocalDateTime.now().plusMinutes(10);
+    }
+
+    /**
+     * 테스트용 메소드
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String Name) {
+        this.name = Name;
     }
 
 }
