@@ -2,6 +2,7 @@ package com.example.movie15.domain.booking.entity;
 
 import com.example.movie15.domain.booking.enums.BookingStatus;
 import com.example.movie15.domain.cinema.entity.Seat;
+import com.example.movie15.domain.cinema.entity.SeatType;
 import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.runtime.entity.RunTime;
 import com.example.movie15.domain.user.entity.User;
@@ -9,6 +10,7 @@ import com.example.movie15.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +27,7 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus;
 
-    @OneToOne(fetch = LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToOne(fetch = LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;
 
     @ManyToOne(fetch = LAZY)
@@ -65,6 +67,29 @@ public class Booking {
         seatList.stream()
             .map(seat -> new BookingSeat(seat, runTime, this))
             .forEach(this::addBookingSeat);
+    }
+
+    public Booking(BookingStatus bookingStatus, RunTime runTime, User user, List<Seat> seatList) {
+        this.bookingStatus = bookingStatus;
+        this.runTime = runTime;
+        this.user = user;
+
+
+        seatList.stream()
+            .map(seat -> new BookingSeat(seat, runTime, this))
+            .forEach(this::addBookingSeat);
+
+        BigDecimal amount = seatList.stream()
+            .map(seat -> {
+                if (seat.getType().equals(SeatType.VIP))
+                    return runTime.getAmount().multiply(BigDecimal.valueOf(SeatType.VIP.getPriceRadio()));
+                else if (seat.getType().equals(SeatType.ECONOMY))
+                    return runTime.getAmount().multiply(BigDecimal.valueOf(SeatType.ECONOMY.getPriceRadio()));
+                else
+                    return runTime.getAmount();
+            })
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        this.payment = new Payment(amount);
     }
 
     private void addBookingSeat(BookingSeat bookingSeat) {
