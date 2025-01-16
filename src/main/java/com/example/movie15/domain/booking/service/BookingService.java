@@ -1,25 +1,21 @@
 package com.example.movie15.domain.booking.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.movie15.domain.booking.dto.BookingRequestDto;
 import com.example.movie15.domain.booking.dto.BookingResponseDto;
 import com.example.movie15.domain.booking.entity.Booking;
-import com.example.movie15.domain.booking.entity.BookingSeat;
 import com.example.movie15.domain.booking.enums.BookingStatus;
 import com.example.movie15.domain.booking.repository.BookingRepository;
 import com.example.movie15.domain.booking.repository.BookingSeatRepository;
-import com.example.movie15.domain.cinema.entity.Seat;
-import com.example.movie15.domain.cinema.repository.SeatRepository;
-import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.runtime.entity.RunTime;
+import com.example.movie15.domain.runtime.entity.Seat;
 import com.example.movie15.domain.runtime.repository.RunTimeRepository;
+import com.example.movie15.domain.runtime.repository.SeatRepository;
 import com.example.movie15.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;

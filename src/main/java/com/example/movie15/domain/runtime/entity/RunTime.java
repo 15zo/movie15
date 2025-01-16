@@ -3,9 +3,13 @@ package com.example.movie15.domain.runtime.entity;
 import static jakarta.persistence.FetchType.*;
 
 import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import javax.net.ssl.SSLSession;
+
+import com.example.movie15.domain.cinema.entity.CinemaHall;
 import com.example.movie15.domain.cinema.entity.Hall;
 import com.example.movie15.domain.movie.entity.Movie;
 
@@ -31,9 +35,10 @@ public class RunTime {
 	@JoinColumn(name = "movie_id", nullable = false)
 	private Movie movie; // 영화 ID 참조
 
-	@ManyToOne(fetch = LAZY)
-	@JoinColumn(name = "hall_id", nullable = false)
-	private Hall hall; // 상영관 참조
+
+	@ManyToOne
+	@JoinColumn(name = "cinema_hall_id", nullable = false) // CinemaHall 참조
+	private CinemaHall cinemaHall;
 
 	@Column(nullable = false)
 	private LocalTime startTime; // 상영 시작 시간
@@ -45,10 +50,10 @@ public class RunTime {
 	private LocalDate date; // 상영 날짜
 
 	@Column(nullable = false)
-	private BigDecimal amount;  // 영화 가격
+	private BigDecimal amount;
 
-	public RunTime(Hall hall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime, Decimal amount) {
-		this.hall = hall;
+	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,BigDecimal price) {
+		this.cinemaHall = cinemaHall;
 		this.movie = movie;
 		this.date = date;
 		this.startTime = startTime;
@@ -57,5 +62,7 @@ public class RunTime {
 	}
 
 	public RunTime() {
+
 	}
+
 }

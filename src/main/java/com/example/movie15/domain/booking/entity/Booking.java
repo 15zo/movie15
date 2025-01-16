@@ -1,10 +1,10 @@
 package com.example.movie15.domain.booking.entity;
 
 import com.example.movie15.domain.booking.enums.BookingStatus;
-import com.example.movie15.domain.cinema.entity.Seat;
-import com.example.movie15.domain.cinema.entity.SeatType;
+import com.example.movie15.domain.runtime.entity.Seat;
 import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.runtime.entity.RunTime;
+import com.example.movie15.domain.runtime.model.SeatType;
 import com.example.movie15.domain.user.entity.User;
 
 import jakarta.persistence.*;
@@ -13,7 +13,6 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static jakarta.persistence.FetchType.LAZY;
 
