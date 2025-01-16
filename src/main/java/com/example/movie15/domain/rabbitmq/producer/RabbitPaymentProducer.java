@@ -125,9 +125,6 @@ public class RabbitPaymentProducer {
             String text = String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", movieStartTime);
             EmailMessage emailMessage = new EmailMessage(bookingId, userEmail, subject, text);
 
-            // bookingId 세팅
-            emailMessage.setBookingId(bookingId);
-
             // Redis 에 저장
             redisTemplate.opsForHash().put(RedisKey.REMINDER_KEY, bookingId, emailMessage); // 메인키 , 식별값 , 데이터
 

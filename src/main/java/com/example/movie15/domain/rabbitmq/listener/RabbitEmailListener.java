@@ -24,12 +24,7 @@ public class RabbitEmailListener  {
      */
     @RabbitListener(queues = "emailDelayQueue")
     public void receiveEmailMessage(EmailMessage emailMessage) {
-        try {
-            log.info("지연된 이메일 메시지를 수신했습니다. 유저: {}", emailMessage.getUserEmail());
-            emailService.sendEmail(emailMessage.getUserEmail(), emailMessage.getSubject(), emailMessage.getText());
-        } catch (Exception e) {
-            log.error("유저 '{}'의 지연된 이메일 메시지 처리에 실패했습니다.", emailMessage.getUserEmail(), e);
-        }
+        processEmailMessage(emailMessage);
     }
 
     /**
@@ -38,12 +33,7 @@ public class RabbitEmailListener  {
      */
     @RabbitListener(queues = "chargeQueue")
     public void chargeEmailMessage(EmailMessage emailMessage) {
-        try {
-            log.info("결제 이메일 메시지를 수신했습니다. 유저: {}", emailMessage.getUserEmail());
-            emailService.sendEmail(emailMessage.getUserEmail(), emailMessage.getSubject(), emailMessage.getText());
-        } catch (Exception e) {
-            log.error("유저 '{}'의 결제 이메일 메시지 처리에 실패했습니다.", emailMessage.getUserEmail(), e);
-        }
+        processEmailMessage(emailMessage);
     }
 
     /**
@@ -53,21 +43,32 @@ public class RabbitEmailListener  {
     @RabbitListener(queues = "cancelQueue")
     public void cancelEmailMessage(EmailMessage emailMessage) {
 
+        long bookingId = emailMessage.getBookingId();
+
         // Redis 에서 EmailMessage 를 가져옴
-        EmailMessage redisEmailMessage = (EmailMessage) redisTemplate.opsForHash().get(RedisKey.REMINDER_KEY, emailMessage.getBookingId());
+        EmailMessage redisEmailMessage = (EmailMessage) redisTemplate.opsForHash().get(RedisKey.REMINDER_KEY, bookingId);
 
         // EmailMessage 가 null 이 아니면 이메일 그대로 발송.
         // null 이면 발송하지 않고 취소된 메시지라는 로그만 남김.
         if (redisEmailMessage != null) {
-            try {
-                log.info("결제 취소 이메일 메시지를 수신했습니다. 유저: {}", emailMessage.getUserEmail());
-                emailService.sendEmail(emailMessage.getUserEmail(), emailMessage.getSubject(), emailMessage.getText());
-            } catch (Exception e) {
-                log.error("유저 '{}'의 결제 취소 이메일 메시지 처리에 실패했습니다.", emailMessage.getUserEmail(), e);
-            }
+            processEmailMessage(emailMessage);
         }
         else {
-            log.info("이미 결제취소한 메시지입니다. 이메일을 보내지 않습니다. 유저: {}", emailMessage.getUserEmail());
+            log.info("이미 결제취소한 메시지입니다. 이메일을 보내지 않습니다.");
+        }
+    }
+
+    // 공통메소드로 추출
+    private void processEmailMessage(EmailMessage emailMessage) {
+        String userEmail = emailMessage.getUserEmail();
+        String subject = emailMessage.getSubject();
+        String text = emailMessage.getText();
+
+        try {
+            log.info("이메일 메시지 수신. 유저이메일 : {}", userEmail);
+            emailService.sendEmail(userEmail, subject, text);
+        } catch (Exception e) {
+            log.error("이메일 메시지 수신 실패. 유저이메일 : {}", userEmail);
         }
     }
 
