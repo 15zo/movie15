@@ -40,6 +40,11 @@ public class Seat {
     @OneToMany(mappedBy = "seat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeatList = new ArrayList<>();
 
+
+    public SeatType getSeatType() {
+        return  this.type;
+    };
+
     public String getFormattedSeatNumber() {
         // rowNum을 알파벳으로 변환 (A = 1, B = 2, ...)
         char rowChar = (char) ('A' + this.rowNum - 1); // 1부터 시작한다고 가정

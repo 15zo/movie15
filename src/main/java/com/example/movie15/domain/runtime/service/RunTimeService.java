@@ -63,7 +63,7 @@ public class RunTimeService {
 		}
 
 		// 런타임 저장
-		RunTime runTime = new RunTime(cinemaHall, movie, requestDto.getDate(), requestDto.getStartTime(), endTime, requestDto.getPrice());
+		RunTime runTime = new RunTime(cinemaHall, movie, requestDto.getDate(), requestDto.getStartTime(), endTime, requestDto.getAmount());
 		RunTime savedRunTime = runTimeRepository.save(runTime);
 
 		return RunTimeResponseDto.toDto(savedRunTime);

@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import javax.net.ssl.SSLSession;
+
 import com.example.movie15.domain.cinema.entity.CinemaHall;
 import com.example.movie15.domain.cinema.entity.Hall;
 import com.example.movie15.domain.movie.entity.Movie;
@@ -50,7 +52,7 @@ public class RunTime {
 	@Column(nullable = false)
 	private BigDecimal amount;
 
-	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,int price) {
+	public RunTime(CinemaHall cinemaHall, Movie movie, LocalDate date, LocalTime startTime, LocalTime endTime,BigDecimal price) {
 		this.cinemaHall = cinemaHall;
 		this.movie = movie;
 		this.date = date;
@@ -62,4 +64,5 @@ public class RunTime {
 	public RunTime() {
 
 	}
+
 }

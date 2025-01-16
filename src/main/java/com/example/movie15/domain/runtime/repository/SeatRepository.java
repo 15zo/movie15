@@ -15,4 +15,7 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 		"JOIN RunTime rt ON rt.cinemaHall.id = ch.id " +
 		"WHERE rt.id = :runtimeId")
 	List<Seat> findSeatsByRunTimeId(@Param("runtimeId") Long runtimeId);
+
+	@Query("select s from Seat s where s.id in :idList")
+	List<Seat> findByIdList(@Param("idList") List<Long> idList);
 }

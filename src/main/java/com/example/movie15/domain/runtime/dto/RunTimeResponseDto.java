@@ -1,6 +1,7 @@
 package com.example.movie15.domain.runtime.dto;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -19,7 +20,7 @@ public class RunTimeResponseDto {
 	private LocalDate date;
 	private LocalTime startTime;
 	private LocalTime endTime;
-	private int price;
+	private BigDecimal amount;
 
 	public static RunTimeResponseDto toDto(RunTime runTime) {
 		// Cinema 이름 가져오기
@@ -33,7 +34,7 @@ public class RunTimeResponseDto {
 			runTime.getDate(),
 			runTime.getStartTime(),
 			runTime.getEndTime(),
-			runTime.getPrice()
+			runTime.getAmount()
 		);
 	}
 }

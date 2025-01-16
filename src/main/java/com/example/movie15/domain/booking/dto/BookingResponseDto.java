@@ -34,7 +34,7 @@ public class BookingResponseDto {
 		return new BookingResponseDto(
 			booking.getId(),
 			booking.getRunTime().getMovie().getTitle(),
-			booking.getRunTime().getHall().getId(),
+			booking.getRunTime().getCinemaHall().getHall().getId(),
 			booking.getRunTime().getDate(),
 			booking.getRunTime().getStartTime(),
 			booking.getRunTime().getEndTime(),
