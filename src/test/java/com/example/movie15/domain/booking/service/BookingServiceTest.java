@@ -75,6 +75,7 @@ class BookingServiceTest {
 		Booking booking = new Booking(BookingStatus.PENDING, runTime, user, findSeatList);
 		bookingRepository.save(booking);
 
+		bookingRepository.delete(booking);
 	}
 
 	@Commit
