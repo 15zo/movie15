@@ -45,9 +45,7 @@ public class UserService {
         }
 
         String encodedPassword = passwordEncoder.encode(userRequestDto.getPassword());
-        userRequestDto.updatePassword(encodedPassword);
-
-        User user = userRequestDto.toEntity();
+        User user = new User(userRequestDto.getEmail(), encodedPassword,userRequestDto.getName());
 
         // <<초기값: 인증 미완료 상태.>> 인증안하고 로그인 시도시 이 변수값으로 로그인 못하게하면됨.
         user.setVerified(false);
