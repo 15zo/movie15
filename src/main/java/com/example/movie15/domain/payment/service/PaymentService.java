@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 
+import com.example.movie15.domain.rabbitmq.producer.RabbitPaymentProducer;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -32,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class PaymentService {
 
+	private final RabbitPaymentProducer rabbitPaymentProducer;
 	private final PaymentRepository paymentRepository;
 	private final BookingRepository bookingRepository;
 
@@ -54,6 +56,10 @@ public class PaymentService {
 
 		// 예약 정보 결제 정보 저장
 		booking.updateBookingStatus(BookingStatus.COMPLETED, payment);
+
+		// rabbitmq 호출
+		rabbitPaymentProducer.sendChargeEvent(booking); // 결제성공 이메일 발송
+		rabbitPaymentProducer.movieStartReminderEmail(booking); // 영화시작 30분전 이메일발송 예약
 	}
 
 	// 결제 실패
@@ -81,6 +87,9 @@ public class PaymentService {
 
 		// 예약 정보 결제 정보 저장
 		booking.updateBookingStatus(BookingStatus.CANCELED, payment);
+
+		// rabbitmq 취소 메소드 호출
+		rabbitPaymentProducer.sendCancelEvent(booking);
 
 		return tossPaymentCancel(paymentKey, cancelReason);
 	}
