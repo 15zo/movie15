@@ -41,6 +41,10 @@ public class UserRequestDto {
         );
     }
 
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     // 테스트용 생성자
     public UserRequestDto(String email, String password) {
         this.email = email;

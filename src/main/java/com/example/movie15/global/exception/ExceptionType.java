@@ -25,6 +25,12 @@ public enum ExceptionType {
     INQUIRY_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 문의 사항에 접근할 권한이 없습니다."),
     NOT_BLANK(HttpStatus.BAD_REQUEST, "값이 비어 있거나 공백일 수 없습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 역할 값입니다."),
+    INVALID_CURRENT_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
+    PASSWORD_SAME_AS_PREVIOUS(HttpStatus.BAD_REQUEST, "새 비밀번호는 이전 비밀번호와 다르게 설정해야 합니다."),
+    WRONG_EMAIL(HttpStatus.UNAUTHORIZED, "아이디가 잘못되었습니다."),
+    WRONG_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+    MISSING_BEARER_TOKEN(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다.")
+
 
     ;
 

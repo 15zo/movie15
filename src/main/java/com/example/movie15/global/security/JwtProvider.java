@@ -1,5 +1,7 @@
 package com.example.movie15.global.security;
 
+import com.example.movie15.global.exception.BadValueException;
+import com.example.movie15.global.exception.ExceptionType;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -99,6 +101,14 @@ public class JwtProvider {
             log.error("지원되지 않는 JWT 토큰입니다.: {}", e.getMessage());
         }
         return false;
+    }
+
+    // Authorization 헤더에서 Bearer 토큰 추출
+    public String extractToken(String header) {
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            return header.substring(7); // "Bearer " 이후의 토큰 반환
+        }
+        throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
     }
 
     // 토큰이 무효화됐는지 확인
