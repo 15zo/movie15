@@ -13,7 +13,6 @@ public class MovieDto {
 	private String overview;
 	private String release_date;
 	private Integer runtime;
-	private String status;
 	private List<GenreDto> genres;
 	private String poster_path;
 	private String trailerUrl;

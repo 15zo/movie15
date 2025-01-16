@@ -1,10 +1,10 @@
 package com.example.movie15.domain.booking.entity;
 
 import com.example.movie15.domain.booking.enums.BookingStatus;
-import com.example.movie15.domain.cinema.entity.Seat;
-import com.example.movie15.domain.cinema.entity.SeatType;
+import com.example.movie15.domain.runtime.entity.Seat;
 import com.example.movie15.domain.payment.entity.Payment;
 import com.example.movie15.domain.runtime.entity.RunTime;
+import com.example.movie15.domain.runtime.model.SeatType;
 import com.example.movie15.domain.user.entity.User;
 
 import jakarta.persistence.*;
@@ -13,12 +13,14 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static jakarta.persistence.FetchType.LAZY;
 
+import org.hibernate.annotations.SQLDelete;
+
 @Entity
 @Getter
+@SQLDelete(sql = "UPDATE booking SET is_deleted = true WHERE id = ?")
 public class Booking {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +41,8 @@ public class Booking {
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeatList = new ArrayList<>();
 
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
+    private Boolean isDeleted = false;
 
     public void updateBookingStatus(BookingStatus bookingStatus, Payment payment) {
 
