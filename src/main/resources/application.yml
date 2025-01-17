@@ -74,22 +74,6 @@ tmdb:
   api-key: ${MDB_API_KEY}
   base-url: "https://api.themoviedb.org/3"
 
-  # rabbitmq
-  # docker 를 이용해서 rabbitmq 실행
-  # 1. <터미널>docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management -> rabbitmq 띄우기
-  # 2. <브라우저>delay-message 플러그인 다운로드(ez 파일) => https://github.com/rabbitmq/rabbitmq-delayed-message-exchange
-
-  # 플러그인 카피 => 경로 각자 바뀔수있으니 경로확인
-  # 3. <터미널>docker cp /Users/kimmyungho/Downloads/rabbitmq_delayed_message_exchange-4.0.2.ez \
-  # 4. rabbitmq:/plugins/
-
-  # 도커 rabbitmq 내부 접속
-  # 5. <터미널>docker exec -it rabbitmq bash
-
-  # 복사한 플러그인 활성화
-  # 6. <터미널>rabbitmq-plugins enable rabbitmq_delayed_message_exchange
-
-  # 7. <터미널> <선택사항. 안해도됨>rabbitmq-plugins list     => 플러그인 확인
   rabbitmq:
     host: localhost
     port: 5672

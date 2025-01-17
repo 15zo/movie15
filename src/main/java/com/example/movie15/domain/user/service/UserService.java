@@ -87,6 +87,11 @@ public class UserService {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
         }
 
+        // 회원가입 이메일 인증을 하지 않았을때
+        if (!user.isVerified()) {
+            throw new ForbiddenException(ExceptionType.EMAIL_NOT_VERIFIED);
+        }
+
         // 사용자 인증 후 인증 객체를 저장
         Authentication authentication = this.authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword())
