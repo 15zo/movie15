@@ -35,6 +35,7 @@ public class WebConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
+
         return builder.build();
     }
 
