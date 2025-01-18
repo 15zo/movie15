@@ -39,6 +39,7 @@ public class WebConfig {
         return builder.build();
     }
 
+    // URL 인증 및 인가 정책
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)

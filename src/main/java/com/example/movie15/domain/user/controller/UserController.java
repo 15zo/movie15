@@ -42,7 +42,7 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponseBody<>("로그인을 성공하였습니다.", authResponse));
     }
 
-    // 로그아웃
+    // 로그아웃 - 리프레쉬 갱신을 레디스 방식으로 하면 가능
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
         userService.logout(request);
