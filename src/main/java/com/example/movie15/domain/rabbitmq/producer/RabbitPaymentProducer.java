@@ -103,11 +103,12 @@ public class RabbitPaymentProducer {
 
         // 현재 날짜와 결합하여 LocalDateTime 으로 변환 (영화 시작 시간)
         LocalDateTime movieStartDateTime = LocalDate.now().atTime(movieStartTime);
+        LocalDateTime now = LocalDateTime.now();
 
         // 현재 시간과 비교해 딜레이 계산 (ms 단위)
-        long delay = ChronoUnit.MILLIS.between(LocalDateTime.now(), movieStartDateTime.minusMinutes(30));
+        long delay = ChronoUnit.MILLIS.between(now, movieStartDateTime.minusMinutes(30));
         // 메시지 만료시간
-        long expirationTime = ChronoUnit.MILLIS.between(LocalDateTime.now(), movieStartDateTime.plusMinutes(10));
+        long expirationTime = ChronoUnit.MILLIS.between(now, movieStartDateTime.plusMinutes(10));
 
         // 만약 영화 시작이 이미 30분 이내면 경고 로그 남김
         if (delay < 0) {
@@ -124,8 +125,13 @@ public class RabbitPaymentProducer {
                 String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", movieStartTime)
         );
 
-        // Redis 에 저장
-        redisTemplate.opsForHash().put(RedisKey.REMINDER_KEY, bookingId, emailMessage); // 메인키 , 식별값 , 데이터
+        // Redis에 예약된 알림이 이미 존재하는지 확인
+        Boolean alreadyExists = redisTemplate.opsForHash().putIfAbsent(RedisKey.REMINDER_KEY, bookingId, emailMessage);
+
+        if (!alreadyExists) {
+            log.warn("이미 예약된 알림이 존재합니다. 예약을 건너뜁니다. (예약 ID: {}, 사용자 이메일: {})", bookingId, userEmail);
+            return; // 작업 중단
+        }
 
         sendQueue(
                 QueueBindings.DELAYED_EXCHANGE,
