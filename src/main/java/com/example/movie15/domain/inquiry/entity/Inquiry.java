@@ -32,7 +32,7 @@ public class Inquiry extends BaseEntity {
     private InquiryStatus status = InquiryStatus.PENDING; // 기본값: PENDING(답변 대기 중)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Inquiry(String subject, String content, User user) {
@@ -42,10 +42,15 @@ public class Inquiry extends BaseEntity {
     }
 
     public void update(String subject, String content) {
-        if (this.status == InquiryStatus.ANSWERED) {
-            throw new IllegalStateException("이미 답변된 문의는 수정할 수 없습니다.");
-        }
         this.subject = subject;
         this.content = content;
+    }
+
+    public void changeStatus(InquiryStatus newStatus) {
+        this.status = newStatus;
+    }
+
+    public boolean isAnswered() {
+        return this.status == InquiryStatus.ANSWERED;
     }
 }
