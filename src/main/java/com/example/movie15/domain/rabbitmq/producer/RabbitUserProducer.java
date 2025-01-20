@@ -20,6 +20,7 @@ public class RabbitUserProducer {
                 userId,
                 message -> {
                     message.getMessageProperties().setHeader("x-delay", 600_000L);
+                    message.getMessageProperties().setExpiration(String.valueOf(1_200_000L));
                     return message;
                 }
         );
