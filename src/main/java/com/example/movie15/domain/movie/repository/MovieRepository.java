@@ -1,11 +1,14 @@
 package com.example.movie15.domain.movie.repository;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.example.movie15.domain.movie.dto.MovieResponseDto;
 import com.example.movie15.domain.movie.entity.Movie;
@@ -33,4 +36,13 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 		"WHERE r.date >= CURRENT_DATE " +
 		"AND (r.startTime <= CURRENT_TIME AND r.endTime >= CURRENT_TIME)")
 	List<Movie> findCurrentlyPlayingMovies();
+
+	@Query("SELECT m FROM Movie m WHERE LOWER(m.title) = LOWER(:title)")
+	Optional<Movie> findByTitle(String title);
+
+	@Query(value = "SELECT * FROM movie m WHERE LOWER(m.title) = LOWER(:title)", nativeQuery = true)
+	Optional<Movie> findByTitleIncludingDeleted(@Param("title") String title); // 삭제된 데이터 포함
+
+	@Query(value = "SELECT * FROM movie m WHERE m.removed_at < :oneWeekAgo AND m.is_deleted = false", nativeQuery = true)
+	List<Movie> findMoviesRemovedMoreThanAWeekAgo(@Param("oneWeekAgo") LocalDate oneWeekAgo); // 삭제된 영화 필터링
 }
