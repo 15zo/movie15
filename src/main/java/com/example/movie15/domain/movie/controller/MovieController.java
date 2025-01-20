@@ -37,10 +37,11 @@ public class MovieController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(savedMovie);
 	}
 
+	//TMDB에서 인기영화 상위40개 DB저장
 	@GetMapping("/popular")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void savePopularMoviesToDatabase() {
-		movieService.savePopularMovies();
+		movieService.savePopularMoviesToDatabase();
 	}
 
 	@GetMapping
