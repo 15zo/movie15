@@ -70,7 +70,7 @@ public class RabbitPaymentProducer {
         if (deleteRedis > 0) {
             log.info("예약 메시지가 Redis 에서 성공적으로 취소되었습니다. (예약 ID: {})", bookingId);
         } else {
-            log.info("Redis 에서 취소할 메시지를 찾을 수 없습니다. (예약 ID: {})", bookingId);
+            log.warn("Redis 에서 취소할 메시지를 찾을 수 없습니다. (예약 ID: {})", bookingId);
         }
 
         sendQueue(
@@ -132,7 +132,7 @@ public class RabbitPaymentProducer {
                     emailMessage,
                     message -> {
                         message.getMessageProperties().setHeader("x-delay", delay);
-                        message.getMessageProperties().setExpiration(String.valueOf(TEN_MINUTE));
+                        message.getMessageProperties().setExpiration(String.valueOf(delay + TEN_MINUTE));
                         return message;
                     });
             log.info("RabbitMQ 딜레이 메시지 전송 성공. (예약자: {})", userEmail);
@@ -155,7 +155,7 @@ public class RabbitPaymentProducer {
                     routingKey,
                     emailMessage,
                     message -> {
-                        message.getMessageProperties().setExpiration(String.valueOf(RabbitPaymentProducer.TEN_MINUTE));
+                        message.getMessageProperties().setExpiration(String.valueOf(TEN_MINUTE));
                         return message;
                     }
             );
