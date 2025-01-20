@@ -62,6 +62,25 @@ public class RabbitConfig {
     }
 
     /**
+     * Delayed Exchange 설정
+     * @return CustomExchange 객체
+     */
+    @Bean
+    public CustomExchange userSignupExchange() {
+        log.info("userSignupExchange 구성 중");
+        return new CustomExchange(
+                QueueBindings.USER_SIGNUP_EXCHANGE,
+                "x-delayed-message",
+                true,
+                false
+        ) {
+            {
+                getArguments().put("x-delayed-type", "direct");
+            }
+        };
+    }
+
+    /**
      * Delayed Email Queue 생성
      * @return Queue 객체
      */
@@ -91,6 +110,12 @@ public class RabbitConfig {
         return new Queue(QueueBindings.CANCEL_QUEUE, true);
     }
 
+    @Bean
+    public Queue userSignupQueue() {
+        log.info("userSignupQueue 생성 중");
+        return new Queue(QueueBindings.USER_SIGNUP_QUEUE, true);
+    }
+
     // 3. 바인딩 설정
     /**
      * Delayed Exchange 와 Email Queue 바인딩
@@ -105,6 +130,22 @@ public class RabbitConfig {
                 .bind(emailDelayQueue)
                 .to(delayedExchange)
                 .with(QueueBindings.EMAIL_DELAY_KEY)
+                .noargs();
+    }
+
+    /**
+     * Delayed Exchange 와 signup Queue 바인딩
+     * @param userSignupQueue 큐
+     * @param userSignupExchange 딜레이 익스체인지
+     * @return Binding 객체
+     */
+    @Bean
+    public Binding userSignupQueueBinding(Queue userSignupQueue, CustomExchange userSignupExchange) {
+        log.info("userSignupQueue 를 userSignupExchange 에 라우팅 키 ‘userSignupKey’로 바인딩");
+        return BindingBuilder
+                .bind(userSignupQueue)
+                .to(userSignupExchange)
+                .with(QueueBindings.USER_SIGNUP_KEY)
                 .noargs();
     }
 }

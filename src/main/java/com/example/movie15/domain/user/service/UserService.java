@@ -1,6 +1,7 @@
 package com.example.movie15.domain.user.service;
 
 import com.example.movie15.domain.email.service.SignupEmailSenderService;
+import com.example.movie15.domain.rabbitmq.producer.RabbitUserProducer;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
 import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
@@ -32,6 +33,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
 
+    private final RabbitUserProducer rabbitUserProducer;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -57,6 +59,8 @@ public class UserService {
         user.setTokenExpiryTime(); // 토큰 유효시간: 10분
 
         userRepository.save(user);
+
+        rabbitUserProducer.userSignupEvent(user.getId()); // rabbitmq
     }
 
     @Transactional

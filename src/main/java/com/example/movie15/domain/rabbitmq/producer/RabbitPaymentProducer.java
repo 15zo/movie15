@@ -21,7 +21,7 @@ public class RabbitPaymentProducer {
 
     private final RabbitTemplate rabbitTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
-    private static final long TEN_MINUTE = 600000;
+    private static final long TEN_MINUTE = 600_000L;
 
     /**
      * 결제 완료 시 해당 예약에 대한 이메일 알림을 큐에 전송하는 메소드.
@@ -42,11 +42,8 @@ public class RabbitPaymentProducer {
                 "영화결제가 완료되었습니다! 시간에 맞춰 입장해주세요!"
         );
         sendQueue(
-                QueueBindings.BASE_EXCHANGE,
                 QueueBindings.CHARGE_QUEUE_KEY,
-                emailMessage,
-                0,
-                TEN_MINUTE
+                emailMessage
         );
     }
 
@@ -77,11 +74,8 @@ public class RabbitPaymentProducer {
         }
 
         sendQueue(
-                QueueBindings.BASE_EXCHANGE,
                 QueueBindings.CANCEL_QUEUE_KEY,
-                emailMessage,
-                0,
-                TEN_MINUTE
+                emailMessage
         );
     }
 
@@ -107,8 +101,6 @@ public class RabbitPaymentProducer {
 
         // 현재 시간과 비교해 딜레이 계산 (ms 단위)
         long delay = ChronoUnit.MILLIS.between(now, movieStartDateTime.minusMinutes(30));
-        // 메시지 만료시간
-        long expirationTime = ChronoUnit.MILLIS.between(now, movieStartDateTime.plusMinutes(10));
 
         // 만약 영화 시작이 이미 30분 이내면 경고 로그 남김
         if (delay < 0) {
@@ -125,7 +117,7 @@ public class RabbitPaymentProducer {
                 String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", movieStartTime)
         );
 
-        // Redis에 예약된 알림이 이미 존재하는지 확인
+        // Redis 에 예약된 알림이 이미 존재하는지 확인
         Boolean alreadyExists = redisTemplate.opsForHash().putIfAbsent(RedisKey.REMINDER_KEY, bookingId, emailMessage);
 
         if (!alreadyExists) {
@@ -133,13 +125,20 @@ public class RabbitPaymentProducer {
             return; // 작업 중단
         }
 
-        sendQueue(
-                QueueBindings.DELAYED_EXCHANGE,
-                QueueBindings.EMAIL_DELAY_KEY,
-                emailMessage,
-                delay,
-                expirationTime
-        );
+        try {
+            rabbitTemplate.convertAndSend(
+                    QueueBindings.DELAYED_EXCHANGE,
+                    QueueBindings.EMAIL_DELAY_KEY,
+                    emailMessage,
+                    message -> {
+                        message.getMessageProperties().setHeader("x-delay", delay);
+                        message.getMessageProperties().setExpiration(String.valueOf(TEN_MINUTE));
+                        return message;
+                    });
+            log.info("RabbitMQ 딜레이 메시지 전송 성공. (예약자: {})", userEmail);
+        } catch (Exception e) {
+            log.error("RabbitMQ 메시지 전송 실패. (예약자: {})", userEmail, e);
+        }
     }
 
     /**
@@ -148,19 +147,18 @@ public class RabbitPaymentProducer {
      * @param routingKey   큐로 메시지를 전송할 라우팅키
      * @param emailMessage 전송할 이메일 메시지
      */
-    private void sendQueue(String exchangeName, String routingKey, EmailMessage emailMessage, long delayTime, long expirationTime) {
+    private void sendQueue(String routingKey, EmailMessage emailMessage) {
         String userEmail = emailMessage.getUserEmail();
 
         try {
             rabbitTemplate.convertAndSend(
-                    exchangeName,
                     routingKey,
                     emailMessage,
                     message -> {
-                        message.getMessageProperties().setDelayLong(delayTime);
-                        message.getMessageProperties().setExpiration(String.valueOf(expirationTime));
+                        message.getMessageProperties().setExpiration(String.valueOf(RabbitPaymentProducer.TEN_MINUTE));
                         return message;
-                    });
+                    }
+            );
             log.info("RabbitMQ 메시지 전송 성공. (예약자: {})", userEmail);
         } catch (Exception e) {
             log.error("RabbitMQ 메시지 전송 실패. (예약자: {})", userEmail, e);

@@ -7,15 +7,18 @@ public final class QueueBindings {
     }
 
     // Exchange 이름
+    public static final String USER_SIGNUP_EXCHANGE = "userSignupExchange";
     public static final String DELAYED_EXCHANGE = "delayedExchange";
     public static final String BASE_EXCHANGE = "";
 
     // Routing Key 이름
+    public static final String USER_SIGNUP_KEY = "userSignupKey";
     public static final String EMAIL_DELAY_KEY = "emailDelayKey";
     public static final String CHARGE_QUEUE_KEY = "chargeQueue";
     public static final String CANCEL_QUEUE_KEY = "cancelQueue";
 
     // Queue 이름
+    public static final String USER_SIGNUP_QUEUE = "userSignupQueue";
     public static final String EMAIL_DELAY_QUEUE = "emailDelayQueue";
     public static final String CHARGE_QUEUE = "chargeQueue";
     public static final String CANCEL_QUEUE = "cancelQueue";
