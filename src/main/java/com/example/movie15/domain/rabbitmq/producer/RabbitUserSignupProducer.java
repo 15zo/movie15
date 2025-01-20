@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class RabbitUserProducer {
+public class RabbitUserSignupProducer {
 
     private final RabbitTemplate rabbitTemplate;
 

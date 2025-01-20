@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class RabbitUserListener {
+public class RabbitUserSignupListener {
 
     private final UserRepository userRepository;
 

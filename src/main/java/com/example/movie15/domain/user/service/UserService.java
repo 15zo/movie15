@@ -1,7 +1,7 @@
 package com.example.movie15.domain.user.service;
 
 import com.example.movie15.domain.email.service.SignupEmailSenderService;
-import com.example.movie15.domain.rabbitmq.producer.RabbitUserProducer;
+import com.example.movie15.domain.rabbitmq.producer.RabbitUserSignupProducer;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
 import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
@@ -17,7 +17,6 @@ import com.example.movie15.global.security.JwtProvider;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,15 +24,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-    private final RabbitUserProducer rabbitUserProducer;
+    private final RabbitUserSignupProducer rabbitUserSignupProducer;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -60,7 +56,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        rabbitUserProducer.userSignupEvent(user.getId()); // rabbitmq
+        rabbitUserSignupProducer.userSignupEvent(user.getId()); // rabbitmq
     }
 
     @Transactional
