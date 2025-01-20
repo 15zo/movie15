@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class RabbitEmailListener  {
+public class RabbitPaymentListener {
 
     private final RabbitEmailService emailService;
 
