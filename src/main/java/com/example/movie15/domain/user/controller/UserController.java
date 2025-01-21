@@ -42,7 +42,7 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponseBody<>("로그인을 성공하였습니다.", authResponse));
     }
 
-    // 로그아웃 - 리프레쉬 갱신을 레디스 방식으로 하면 가능
+    // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
         userService.logout(request);
@@ -61,8 +61,14 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Long id,
                                              @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-
         userService.deleteUser(id, token);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원탈퇴가 완료되었습니다.");
+    }
+
+    // 리프레쉬 토큰 갱신
+    @PostMapping("/refresh")
+    public ResponseEntity<CommonResponseBody<JwtAuthResponse>> refresh(@RequestHeader(HttpHeaders.AUTHORIZATION) String refreshToken) {
+        JwtAuthResponse authResponse = userService.refreshToken(refreshToken);
+        return ResponseEntity.ok(new CommonResponseBody<>("리프레쉬 토큰이 갱신됐습니다.", authResponse));
     }
 }

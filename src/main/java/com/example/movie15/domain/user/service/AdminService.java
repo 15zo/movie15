@@ -85,7 +85,7 @@ public class AdminService {
 
     // JWT를 통한 토큰 유효성 검증 및 관리자 권한 검증
     private void validateAdmin(String token) {
-        if (!jwtProvider.validToken(token)) {
+        if (!jwtProvider.validateToken(token, "ACCESS_TOKEN")) {
             throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
 

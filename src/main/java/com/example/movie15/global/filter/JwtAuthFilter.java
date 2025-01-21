@@ -68,7 +68,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void authenticate(HttpServletRequest request) {
         String token = this.getTokenFromRequest(request);
 
-        if (!StringUtils.hasText(token) || !jwtProvider.validToken(token)) {
+        if (!StringUtils.hasText(token) || !jwtProvider.validateToken(token, "ACCESS_TOKEN")) {
             return;
         }
 

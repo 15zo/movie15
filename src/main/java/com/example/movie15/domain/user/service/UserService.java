@@ -46,7 +46,7 @@ public class UserService {
 
         // 암호화된 비밀번호를 엔티티 생성 시 바로 설정
         String encodedPassword = passwordEncoder.encode(userRequestDto.getPassword());
-        User user = new User(userRequestDto.getEmail(), encodedPassword,userRequestDto.getName());
+        User user = new User(userRequestDto.getEmail(), encodedPassword, userRequestDto.getName());
 
         // <<초기값: 인증 미완료 상태.>> 인증안하고 로그인 시도시 이 변수값으로 로그인 못하게하면됨.
         user.setVerified(false);
@@ -78,27 +78,28 @@ public class UserService {
     }
 
     public JwtAuthResponse login(LoginRequestDto loginRequestDto) {
-        // 이메일로 사용자 조회
         User user = userRepository.findByEmail(loginRequestDto.getEmail())
                 .orElseThrow(() -> new WrongAccessException(ExceptionType.WRONG_EMAIL));
 
-        // 비밀번호 검증 및 삭제된 사용자 검증(보안을 위해 로직을 통합했음)
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword()) || user.isDeleted()) {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
         }
 
-        // 사용자 인증 후 인증 객체를 저장
         Authentication authentication = this.authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // JWT 토큰 생성
-        String accessToken = jwtProvider.generateToken(authentication, user.getId());
-        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken);
+        // JWT 액세스 토큰 생성
+        String accessToken = jwtProvider.generateToken(authentication, user.getId(), "ACCESS_TOKEN");
+        String refreshToken = jwtProvider.generateToken(null, user.getId(), "REFRESH_TOKEN");
+
+        jwtProvider.storeRefreshToken(user.getId(), refreshToken);
+
+        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken, refreshToken);
     }
 
-    // 회원 탈퇴 시 비밀번호 확인
+    // 회원 탈퇴 시 비밀번호 확인 및 목적별 토큰 생성
     public JwtAuthResponse checkPassword(Long userId, String password) {
         User user = userRepository.findByIdOrElseThrow(userId);
 
@@ -106,12 +107,13 @@ public class UserService {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
         }
 
-        Authentication authentication = this.authenticationManager.authenticate(
+        Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getEmail(), password)
         );
 
-        String tempToken = this.jwtProvider.tempToken(authentication);
-        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), tempToken);
+        // 비밀번호 확인 후 PASSWORD_CONFIRMATION 목적의 토큰을 생성
+        String purposeToken = jwtProvider.generateToken(authentication, userId, "PASSWORD_CONFIRMATION");
+        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), purposeToken);
     }
 
     @Transactional
@@ -130,9 +132,10 @@ public class UserService {
     @Transactional
     public void logout(HttpServletRequest request) {
         String token = extractTokenFromRequest(request);
-        if (!jwtProvider.validToken(token)) {
+        if (!jwtProvider.validateToken(token, "ACCESS_TOKEN")) {
             throw new WrongAccessException(ExceptionType.WRONG_TOKEN);
         }
+
         jwtProvider.invalidateToken(token);
     }
 
@@ -152,5 +155,23 @@ public class UserService {
         if (dto.getCurrentPassword().equals(dto.getNewPassword())) {
             throw new BadValueException(ExceptionType.PASSWORD_SAME_AS_PREVIOUS);
         }
+    }
+
+    public JwtAuthResponse refreshToken(String refreshToken) {
+        if (!jwtProvider.validateRefreshToken(refreshToken)) {
+            throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
+        }
+
+        Long userId = jwtProvider.getUserId(refreshToken);
+        String storedRefreshToken = jwtProvider.getRefreshTokenFromRedis(userId);
+        if (!refreshToken.equals(storedRefreshToken)) {
+            throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = userRepository.findByIdOrElseThrow(userId);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), null);
+
+        String newAccessToken = jwtProvider.generateToken(authentication, userId, "ACCESS_TOKEN");
+        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), newAccessToken);
     }
 }

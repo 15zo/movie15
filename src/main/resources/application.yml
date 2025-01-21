@@ -32,7 +32,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET_KEY}
-  expiry-millis: 1800000  # 30분
+  expiry-millis: 3600000  # 60분
 
 cloud:
   aws:

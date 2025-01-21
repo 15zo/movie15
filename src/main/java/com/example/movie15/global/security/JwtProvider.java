@@ -18,7 +18,6 @@ import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
@@ -34,8 +33,7 @@ public class JwtProvider {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    // 1. 설정 및 초기화 관련 메소드
-    // secret과 expriyMillis 유효성 검증
+
     @PostConstruct
     private void validateProperties() {
         if (secret == null || secret.isEmpty()) {
@@ -47,17 +45,18 @@ public class JwtProvider {
         log.info("JWT_SECRET_KEY와 expiryMillis가 정상적으로 로드되었습니다.");
     }
 
-    // 2. 토큰 생성 메소드
-    // JWT 토큰 생성
-    public String generateToken(Authentication authentication, Long userId) {
-        String username = authentication.getName();
-        String role = authentication.getAuthorities().stream()
+    // 토큰 생성 메소드
+    public String generateToken(Authentication authentication, Long userId, String purpose) {
+        String username = (authentication != null) ? authentication.getName() : null;
+        String role = authentication != null
+                ? authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("권한이 없습니다."));
+                .orElse("ROLE_USER")
+                : "ROLE_USER";
 
         Date currentDate = new Date();
-        Date expireDate = new Date(currentDate.getTime() + this.expiryMillis);
+        Date expireDate = new Date(currentDate.getTime() + getExpiry(purpose));
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
@@ -65,130 +64,106 @@ public class JwtProvider {
                 .expiration(expireDate)
                 .claim("username", username)
                 .claim("role", role)
+                .claim("purpose", purpose)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 임시 토큰 생성 -> 이메일 인증, 탈퇴 전 비밀번호 확인, 회원정보변경(비밀번호변경)에서 사용됨.
-    public String tempToken(Authentication authentication) {
-        String username = authentication.getName();
-        Date currentDate = new Date();
-        Date expireDate = new Date(currentDate.getTime() + 60000);  // 임시 토큰 만료 시간: 1분
-
-        return Jwts.builder()
-                .subject(username)
-                .claim("type", "temp")
-                .issuedAt(currentDate)
-                .expiration(expireDate)
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
-                .compact();
+    // 목적별 토큰 만료 시간
+    private long getExpiry(String purpose) {
+        return switch (purpose) {
+            case "PASSWORD_CONFIRMATION" -> TimeUnit.MINUTES.toMillis(10);      // 비밀번호 확인: 10분
+            case "INFO_UPDATE" -> TimeUnit.MINUTES.toMillis(15);                // 회원 정보 변경: 15분
+            case "EMAIL_VERIFICATION" -> TimeUnit.MINUTES.toMillis(20);         // 이메일 인증: 20분
+            case "ACCESS_TOKEN" -> expiryMillis;                                        // 액세스 토큰: application.yml의 설정 값을 사용
+            case "REFRESH_TOKEN" -> TimeUnit.DAYS.toMillis(10);                 // 리프레쉬 토큰: 10일
+            default -> throw new IllegalArgumentException("지원되지 않는 토큰 목적입니다: " + purpose);
+        };
     }
 
-    // 3. 토큰 유효성 및 무효화 관련 메소드
-    // 토큰 유효성 검사(무효화된 토큰 포함)
-    public boolean validToken(String token) throws JwtException {
-        if (isTokenInvalidated(token)) {
-            log.error("무효화된 토큰입니다. token: {}", token);
-            return false;
-        }
+    // 토큰 유효성 검사
+    public boolean validateToken(String token, String expectedPurpose) {
         try {
-            return !this.tokenExpired(token);
-        } catch (MalformedJwtException e) {
-            log.error("잘못된 JWT 토큰입니다.: {}", e.getMessage());
+            Claims claims = parseClaims(token);
+            return expectedPurpose.equals(claims.get("purpose", String.class));
         } catch (ExpiredJwtException e) {
-            log.error("JWT 토큰이 만료됐습니다.: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("지원되지 않는 JWT 토큰입니다.: {}", e.getMessage());
+            log.error("토큰이 만료되었습니다: {}", e.getMessage());
+        } catch (JwtException e) {
+            log.error("유효하지 않은 토큰입니다: {}", e.getMessage());
         }
         return false;
     }
 
-    // Authorization 헤더에서 Bearer 토큰 추출
-    public String extractToken(String header) {
-        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            return header.substring(7); // "Bearer " 이후의 토큰 반환
-        }
-        throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
+    public boolean validateRefreshToken(String token) {
+        return validateToken(token, "REFRESH_TOKEN");
     }
 
-    // 토큰이 무효화됐는지 확인
-    public boolean isTokenInvalidated(String token) {
-        return redisTemplate.hasKey(token);
-    }
-
-    // 토큰 무효화
-    public void invalidateToken(String token) {
-        Claims claims = getClaims(token);
-        Date expiration = claims.getExpiration();
-
-        // Redis에 토큰 저장 (만료 시간 설정)
-        redisTemplate.opsForValue().set(token, "invalid", expiration.getTime() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        log.info("토큰이 무효화됐습니다. token: {}, 만료 시간: {}", token, expiration);
-    }
-
-    // 4. JWT 클레임 및 속성 처리 메소드
-    // 토큰에서 사용자 ID 추출
-    public Long getUserId(String token) {
-        Claims claims = this.getClaims(token);
-        return Long.valueOf(claims.getSubject());
-    }
-
-    // 토큰에서 사용자 이름 추출
-    public String getUsername(String token) {
-        Claims claims = this.getClaims(token);
-        return claims.get("username", String.class);
-    }
-
-    // 임시 토큰 여부 확인
-    public boolean isTempToken(String token) {
-        Claims claims = getClaims(token);
-        System.out.println(claims.get("type"));
-        return "temp".equals(claims.get("type"));
-    }
-
-    // JWT의 claim 부분을 추출
-    private Claims getClaims(String token) {
+    private Claims parseClaims(String token) {
         if (!StringUtils.hasText(token)) {
             throw new MalformedJwtException("토큰이 비어 있습니다.");
         }
-        try {
             return Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                     .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (JwtException e) {
-            log.error("JWT 토큰 처리 중 오류 발생: {}", e.getMessage());
-            throw e;
+                    .parseClaimsJws(token)
+                    .getBody();
         }
+
+    public void storeRefreshToken(Long userId, String refreshToken) {
+            String redisKey = "refreshToken" + userId;
+            long expiryMillis = getExpiry("REFRESH_TOKEN");
+            redisTemplate.opsForValue().set(redisKey, refreshToken, expiryMillis, TimeUnit.MILLISECONDS);
+            log.info("리프레시 토큰 저장 완료: userId={}, token={}", userId, refreshToken);
+        }
+
+    public String getRefreshTokenFromRedis(Long userId) {
+            String redisKey = "refreshToken:" + userId;
+            return (String) redisTemplate.opsForValue().get(redisKey);
+        }
+
+    public void invalidateToken(String token) {
+            redisTemplate.delete(token);
+            log.info("토큰이 무효화됐습니다. token={}", token);
     }
 
-    // 입력 받은 토큰의 만료 여부 확인
-    private boolean tokenExpired(String token) {
-        final Date expiration = this.getExpirationDateFromToken(token);
-        return expiration.before(new Date());
+    // 토큰 추출
+    public String extractToken(String header) {
+        log.debug("Authorization 헤더 값: '{}'", header);
+
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            String token = header.substring(7).trim();
+            log.debug("추출된 JWT 토큰: '{}'", token);
+
+            if (token.contains(" ")) {
+                log.error("JWT 문자열에 공백이 포함돼 있습니다: '{}'", token);
+                throw new MalformedJwtException("JWT 문자열에 공백이 포함돼 있습니다.");
+            }
+            return token;
+        }
+        log.error("Authorization 헤더가 올바르지 않습니다: '{}'", header);
+        throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
     }
 
-    // 입력 받은 토큰의 만료일 반환
-    private Date getExpirationDateFromToken(String token) {
-
-        return this.resolveClaims(token, Claims::getExpiration);
+    public Long getUserId(String token) {
+        return Long.valueOf(parseClaims(token).getSubject());
     }
 
-    // 주어진 JWT 토큰에서 role 정보 추출
+    public String getUsername(String token) {
+        return parseClaims(token).get("username", String.class);
+    }
+
     public String getRoleFromToken(String token) {
-        return resolveClaims(token, claims -> claims.get("role", String.class));
+        return parseClaims(token).get("role", String.class);
     }
 
-    // 주어진 JWT 토큰이 ADMIN 권한을 갖고 있는지 검증
+    // 관리자 권한 확인 메소드
     public boolean isAdmin(String token) {
-        String role = getRoleFromToken(token);
-        return "ROLE_ADMIN".equals(role);
-    }
-
-    // 토큰에 입력된 로직을 적용 및 결과를 반환
-    private <T> T resolveClaims(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = this.getClaims(token);
-        return claimsResolver.apply(claims);
+        try {
+            String role = getRoleFromToken(token);
+            return "ROLE_ADMIN".equals(role);
+        } catch (Exception e) {
+            log.error("토큰에서 역할 확인 중 오류 발생: {}", e.getMessage());
+            return false;
+        }
     }
 }
