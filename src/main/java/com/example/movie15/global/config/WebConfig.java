@@ -31,7 +31,7 @@ public class WebConfig {
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
 
-    private static final String[] WHITE_LIST = {"/api/users/signup", "/api/users/login", "/api/users/refresh", "/api/error", "/api/verify", "/api/movies/**","/api/cinemas/**", "/api/payment/**", "/api/booking/**", "api/runtimes","api/runtimes/**"};
+    private static final String[] WHITE_LIST = {"/api/users/signup", "/api/users/login", "/api/users/refresh", "/api/error", "/api/verify", "/api/movies/**","/api/cinemas/**", "/api/payment/**", "/api/booking/**", "api/runtimes","api/runtimes/**","api/inquiries","api/inquiries/**"};
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
