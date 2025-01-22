@@ -3,6 +3,7 @@ package com.example.movie15.domain.user.controller;
 import com.example.movie15.domain.user.dto.*;
 import com.example.movie15.domain.user.service.UserService;
 import com.example.movie15.global.exception.CommonResponseBody;
+import com.example.movie15.global.security.JwtProvider;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final JwtProvider jwtProvider;
 
     // 회원가입
     @PostMapping("/signup")
@@ -29,8 +31,10 @@ public class UserController {
     // 회원 정보 수정
     @PatchMapping("/{id}")
     public ResponseEntity<String> updateUserInfo(@PathVariable Long id,
-                                                 @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+                                                 @RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue,
                                                  @Valid @RequestBody UpdateUserRequestDto updateUserRequestDto) {
+
+        String token = jwtProvider.extractToken(headerValue);
         userService.updateUserInfo(id, token, updateUserRequestDto);
         return ResponseEntity.status(HttpStatus.OK).body("회원 정보가 수정되었습니다.");
     }
@@ -53,15 +57,17 @@ public class UserController {
     @PostMapping("/{id}/check")
     public ResponseEntity<CommonResponseBody<JwtAuthResponse>> checkPassword(@PathVariable Long id,
                                                                              @Valid @RequestBody CheckRequestDto checkRequestDto) {
-        JwtAuthResponse authResponse = userService.checkPassword(id, checkRequestDto.getPassword());
-        return ResponseEntity.ok(new CommonResponseBody<>("비밀번호를 확인하였습니다.", authResponse));
+        userService.checkPassword(id, checkRequestDto.getPassword());
+        return ResponseEntity.ok(new CommonResponseBody<>("비밀번호를 확인했습니다."));
     }
 
     // 회원탈퇴
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Long id,
-                                             @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-        userService.deleteUser(id, token);
+                                             @RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue,
+                                             @RequestParam String password) {
+        String token = jwtProvider.extractToken(headerValue);
+        userService.deleteUser(id, token, password);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원탈퇴가 완료되었습니다.");
     }
 

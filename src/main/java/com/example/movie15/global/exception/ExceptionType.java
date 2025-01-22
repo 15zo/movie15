@@ -32,6 +32,7 @@ public enum ExceptionType {
     MISSING_BEARER_TOKEN(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않은 리프레쉬 토큰입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레쉬 토큰이 만료됐습니다."),
+    INVALID_TOKEN_PURPOSE(HttpStatus.BAD_REQUEST, "지원되지 않는 토큰 목적입니다."),
     RUN_TIME_BAD_REQUEST(HttpStatus.BAD_REQUEST, "중복된 시간대입니다."),
     CINEMA_HALL_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지않는 상영관입니다." ),
     RUN_TIME_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지않는 영화상영시간대입니다." ),

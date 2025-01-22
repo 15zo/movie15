@@ -1,5 +1,7 @@
 package com.example.movie15.global.filter;
 
+import com.example.movie15.global.exception.BadValueException;
+import com.example.movie15.global.exception.ExceptionType;
 import com.example.movie15.global.security.AuthenticationScheme;
 import com.example.movie15.global.security.JwtProvider;
 import jakarta.servlet.FilterChain;
@@ -7,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -78,17 +82,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         setAuthentication(request, userDetails);
     }
 
-    // request의 Authorization 헤더에서 토큰 값을 추출
     private String getTokenFromRequest(HttpServletRequest request) {
         final String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String headerPrefix = AuthenticationScheme.generateType(AuthenticationScheme.BEARER);
-        boolean tokenFound = StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix);
+        final String headerPrefix = "Bearer ";
 
-        if (tokenFound) {
-            return bearerToken.substring(headerPrefix.length());
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix)) {
+            String token = bearerToken.substring(headerPrefix.length()).trim();
+            log.debug("Extracted JWT token: {}", token.substring(0, 10) + "..."); // 일부만 로깅
+            return token;
         }
-        return null;
+
+        log.warn("Invalid Authorization header: {}", bearerToken);
+        throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
     }
+
+
 
     private void setAuthentication(HttpServletRequest request, UserDetails userDetails) {
         // 찾아온 사용자 정보로 인증 객체를 생성

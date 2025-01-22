@@ -90,7 +90,7 @@ public class UserService {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // JWT 액세스 토큰 생성
+        // 액세스 토큰, 리프레시 토큰 생성
         String accessToken = jwtProvider.generateToken(authentication, user.getId(), "ACCESS_TOKEN");
         String refreshToken = jwtProvider.generateToken(null, user.getId(), "REFRESH_TOKEN");
 
@@ -99,30 +99,24 @@ public class UserService {
         return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken, refreshToken);
     }
 
-    // 회원 탈퇴 시 비밀번호 확인 및 목적별 토큰 생성
-    public JwtAuthResponse checkPassword(Long userId, String password) {
+    // 회원 탈퇴 시 비밀번호 확인
+    public void checkPassword(Long userId, String password) {
         User user = userRepository.findByIdOrElseThrow(userId);
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
         }
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getEmail(), password)
-        );
-
-        // 비밀번호 확인 후 PASSWORD_CONFIRMATION 목적의 토큰을 생성
-        String purposeToken = jwtProvider.generateToken(authentication, userId, "PASSWORD_CONFIRMATION");
-        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), purposeToken);
     }
 
     @Transactional
-    public void deleteUser(Long userId, String token) {
+    public void deleteUser(Long userId, String token, String password) {
         Long requesterId = jwtProvider.getUserId(token);
 
         if (!userId.equals(requesterId)) {
             throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
+
+        checkPassword(userId, password);
 
         User user = userRepository.findByIdOrElseThrow(userId);
         user.updateIsDeleted();

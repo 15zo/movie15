@@ -69,29 +69,34 @@ public class JwtProvider {
                 .compact();
     }
 
-    // 목적별 토큰 만료 시간
-    private long getExpiry(String purpose) {
-        return switch (purpose) {
-            case "PASSWORD_CONFIRMATION" -> TimeUnit.MINUTES.toMillis(10);      // 비밀번호 확인: 10분
-            case "INFO_UPDATE" -> TimeUnit.MINUTES.toMillis(15);                // 회원 정보 변경: 15분
-            case "EMAIL_VERIFICATION" -> TimeUnit.MINUTES.toMillis(20);         // 이메일 인증: 20분
+    // 토큰 만료 시간
+    private long getExpiry(String tokenType) {
+        return switch (tokenType) {
             case "ACCESS_TOKEN" -> expiryMillis;                                        // 액세스 토큰: application.yml의 설정 값을 사용
             case "REFRESH_TOKEN" -> TimeUnit.DAYS.toMillis(10);                 // 리프레쉬 토큰: 10일
-            default -> throw new IllegalArgumentException("지원되지 않는 토큰 목적입니다: " + purpose);
+            default -> throw new IllegalArgumentException("지원되지 않는 토큰 유형입니다: " + tokenType);
         };
     }
 
-    // 토큰 유효성 검사
     public boolean validateToken(String token, String expectedPurpose) {
         try {
+            log.debug("Validating token: {}", token.substring(0, 10) + "...");
             Claims claims = parseClaims(token);
-            return expectedPurpose.equals(claims.get("purpose", String.class));
+
+            String purpose = claims.get("purpose", String.class);
+            if (!expectedPurpose.equals(purpose)) {
+                log.warn("Token purpose mismatch. Expected: {}, Actual: {}", expectedPurpose, purpose);
+                return false;
+            }
+
+            return true;
         } catch (ExpiredJwtException e) {
-            log.error("토큰이 만료되었습니다: {}", e.getMessage());
+            log.warn("Token has expired: {}", e.getMessage());
+            return false;
         } catch (JwtException e) {
-            log.error("유효하지 않은 토큰입니다: {}", e.getMessage());
+            log.warn("Invalid token: {}", e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public boolean validateRefreshToken(String token) {
@@ -99,31 +104,38 @@ public class JwtProvider {
     }
 
     private Claims parseClaims(String token) {
-        if (!StringUtils.hasText(token)) {
-            throw new MalformedJwtException("토큰이 비어 있습니다.");
-        }
+        try {
+            if (!StringUtils.hasText(token)) {
+                throw new MalformedJwtException("토큰이 비어 있습니다.");
+            }
+
             return Jwts.parser()
                     .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+        } catch (JwtException e) {
+            log.warn("Failed to parse token claims: {}", e.getMessage());
+            throw e;
         }
+    }
+
 
     public void storeRefreshToken(Long userId, String refreshToken) {
-            String redisKey = "refreshToken" + userId;
-            long expiryMillis = getExpiry("REFRESH_TOKEN");
-            redisTemplate.opsForValue().set(redisKey, refreshToken, expiryMillis, TimeUnit.MILLISECONDS);
-            log.info("리프레시 토큰 저장 완료: userId={}, token={}", userId, refreshToken);
-        }
+        String redisKey = "refreshToken:" + userId;
+        long expiryMillis = getExpiry("REFRESH_TOKEN");
+        redisTemplate.opsForValue().set(redisKey, refreshToken, expiryMillis, TimeUnit.MILLISECONDS);
+        log.info("리프레시 토큰 저장 완료: userId={}, token 끝자리={}", userId, refreshToken.substring(refreshToken.length() - 5));
+    }
 
     public String getRefreshTokenFromRedis(Long userId) {
-            String redisKey = "refreshToken:" + userId;
-            return (String) redisTemplate.opsForValue().get(redisKey);
-        }
+        String redisKey = "refreshToken:" + userId;
+        return (String) redisTemplate.opsForValue().get(redisKey);
+    }
 
     public void invalidateToken(String token) {
-            redisTemplate.delete(token);
-            log.info("토큰이 무효화됐습니다. token={}", token);
+        redisTemplate.delete(token);
+        log.info("토큰이 무효화됐습니다. token={}", token);
     }
 
     // 토큰 추출
@@ -131,13 +143,8 @@ public class JwtProvider {
         log.debug("Authorization 헤더 값: '{}'", header);
 
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            String token = header.substring(7).trim();
+            String token = header.substring(7).trim().replaceAll("\\s+", "");
             log.debug("추출된 JWT 토큰: '{}'", token);
-
-            if (token.contains(" ")) {
-                log.error("JWT 문자열에 공백이 포함돼 있습니다: '{}'", token);
-                throw new MalformedJwtException("JWT 문자열에 공백이 포함돼 있습니다.");
-            }
             return token;
         }
         log.error("Authorization 헤더가 올바르지 않습니다: '{}'", header);
