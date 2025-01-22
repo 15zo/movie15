@@ -30,8 +30,6 @@ public class InquiryController {
 
     private final InquiryService inquiryService;
     private final JwtProvider jwtProvider;
-    private final FileUploaderService fileUploaderService;
-    private final FileRepository fileRepository;
 
     // 문의 사항 작성
     @PostMapping
@@ -87,14 +85,18 @@ public class InquiryController {
     // 문의 사항 수정
     @PatchMapping("/{id}")
     public ResponseEntity<InquiryResponseDto> updateInquiry(
-            @PathVariable Long id,
-            @RequestBody @Valid InquiryRequestDto dto,
-            @RequestHeader("Authorization") String token) {
+        @PathVariable Long id,
+        @RequestPart(name = "inquiry") String inquiryJson,
+        @RequestPart(name = "files", required = false) List<MultipartFile> files,
+        @RequestHeader("Authorization") String token)  throws IOException{
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        InquiryRequestDto dto = objectMapper.readValue(inquiryJson, InquiryRequestDto.class);
 
         String extractedToken = token.replace("Bearer ", "");
         Long userId = jwtProvider.getUserId(extractedToken);
 
-        InquiryResponseDto response = inquiryService.updateInquiry(id, dto, userId);
+        InquiryResponseDto response = inquiryService.updateInquiry(id, dto, files, userId);
         return ResponseEntity.ok(response);
     }
 

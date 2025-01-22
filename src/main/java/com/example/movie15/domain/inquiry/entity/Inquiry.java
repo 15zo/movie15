@@ -38,7 +38,7 @@ public class Inquiry extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<InquiryFile> inquiryFiles = new ArrayList<>();
 
     public Inquiry(String subject, String content, User user) {

@@ -2,6 +2,7 @@ package com.example.movie15.domain.inquiry.entity;
 
 import com.example.movie15.global.entity.File;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +28,7 @@ public class InquiryFile {
 	@JoinColumn(name = "inquiry_id", nullable = false)
 	private Inquiry inquiry;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY , cascade = CascadeType.REMOVE)
 	@JoinColumn(name = "file_id", nullable = false)
 	private File file;
 
