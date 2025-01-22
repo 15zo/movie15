@@ -121,32 +121,63 @@ public class InquiryService {
     }
 
     @Transactional
-    public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, Long userId) {
+    public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, List<MultipartFile> files,Long userId) {
+        // ✅ 1️⃣ 문의 사항 조회 (존재하지 않으면 예외 발생)
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
-        if (inquiry.isAnswered()) {
-            throw new ConflictException(ExceptionType.INQUIRY_ALREADY_ANSWERED);
+        // ✅ 2️⃣ 사용자가 작성한 문의 사항인지 확인
+        if (!inquiry.getUser().getId().equals(userId)) {
+            throw new ForbiddenException(ExceptionType.INQUIRY_FORBIDDEN);
         }
 
-        if (inquiry.getSubject().equals(dto.getSubject()) && inquiry.getContent().equals(dto.getContent())) {
+        // ✅ 3️⃣ 변경 사항 확인
+        boolean hasContentChanges = !inquiry.getSubject().equals(dto.getSubject()) || !inquiry.getContent().equals(dto.getContent());
+        boolean hasFileChanges = files != null && !files.isEmpty();
+
+        if (!hasContentChanges && !hasFileChanges) {
             throw new BadValueException(ExceptionType.INQUIRY_NO_CHANGES);
         }
 
+        // ✅ 4️⃣ 문의 내용 업데이트
         inquiry.update(dto.getSubject(), dto.getContent());
-        Inquiry updatedInquiry = inquiryRepository.save(inquiry);
 
+        // ✅ 5️⃣ 기존 파일 삭제 후 새로운 파일 업로드
+        if (hasFileChanges) {
+            List<InquiryFile> existingFiles = inquiryFileRepository.findByInquiry(inquiry);
+
+            // 🔥 1️⃣ `inquiry_file` 테이블의 데이터 먼저 삭제
+            inquiryFileRepository.deleteAll(existingFiles);
+
+            // 🔥 2️⃣ `file` 테이블의 데이터 삭제
+            for (InquiryFile inquiryFile : existingFiles) {
+                File file = inquiryFile.getFile();
+                fileUploaderService.deleteFile(file.getUrl()); // S3 삭제 (선택)
+                fileRepository.delete(file);
+            }
+
+            // 🔥 3️⃣ 새로운 파일 업로드 및 저장
+            List<InquiryFile> inquiryFiles = files.stream()
+                .map(file -> uploadFile(file, inquiry))
+                .collect(Collectors.toList());
+
+            inquiryFileRepository.saveAll(inquiryFiles);
+        }
+
+        Inquiry updatedInquiry = inquiryRepository.save(inquiry);
         return mapToResponseDto(updatedInquiry);
     }
 
     // 문의 사항 삭제(사용자)
     @Transactional
     public void deleteInquiry(Long id, String token) {
+        // ✅ 1️⃣ 문의 사항 조회 (존재하지 않으면 예외 발생)
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         Long userId = jwtProvider.getUserId(token);
 
+        // ✅ 2️⃣ 사용자가 작성한 문의 사항인지 확인
         if (!inquiry.getUser().getId().equals(userId)) {
             throw new ForbiddenException(ExceptionType.INQUIRY_FORBIDDEN);
         }
@@ -155,6 +186,22 @@ public class InquiryService {
             throw new ConflictException(ExceptionType.INQUIRY_ALREADY_ANSWERED);
         }
 
+        // ✅ 3️⃣ inquiry_file 데이터를 먼저 삭제
+        List<InquiryFile> inquiryFiles = inquiryFileRepository.findByInquiry(inquiry);
+        inquiryFileRepository.deleteAll(inquiryFiles); // 🔥 inquiry_file 테이블의 데이터를 먼저 삭제
+
+        // ✅ 4️⃣ file 데이터 삭제
+        for (InquiryFile inquiryFile : inquiryFiles) {
+            File file = inquiryFile.getFile();
+
+            // 🔥 S3에서도 파일 삭제 (선택적)
+            fileUploaderService.deleteFile(file.getUrl());
+
+            // 🔥 file 테이블에서 삭제
+            fileRepository.delete(file);
+        }
+
+        // ✅ 5️⃣ inquiry 삭제
         inquiryRepository.delete(inquiry);
     }
 

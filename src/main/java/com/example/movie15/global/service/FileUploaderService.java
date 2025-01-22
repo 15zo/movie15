@@ -34,4 +34,9 @@ public class FileUploaderService {
 		return amazonS3.getUrl(bucket, fileName).toString();
 	}
 
+	public void deleteFile(String fileUrl) {
+		String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+		amazonS3.deleteObject(bucket, fileName);
+	}
+
 }

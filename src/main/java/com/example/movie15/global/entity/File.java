@@ -1,5 +1,9 @@
 package com.example.movie15.global.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.movie15.domain.inquiry.entity.InquiryFile;
 import com.example.movie15.global.model.FileExtension;
 import com.example.movie15.global.model.FileType;
 
@@ -30,6 +34,9 @@ public class File extends BaseEntity {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private FileType type; // 파일 유형
+
+    @OneToMany(mappedBy = "file", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<InquiryFile> inquiryFiles = new ArrayList<>();
 
     public File(String url, String name, Integer size, FileExtension extension, FileType type) {
         this.url = url;
