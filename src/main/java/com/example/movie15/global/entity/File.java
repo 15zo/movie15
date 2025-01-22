@@ -31,9 +31,12 @@ public class File extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private FileType type; // 파일 유형
 
-    public File(String url, String name) {
+    public File(String url, String name, Integer size, FileExtension extension, FileType type) {
         this.url = url;
         this.name = name;
+        this.size = size;
+        this.extension = extension;
+        this.type = type;
     }
 
     public File(){}
