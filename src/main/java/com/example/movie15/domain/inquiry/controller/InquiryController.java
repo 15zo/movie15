@@ -1,10 +1,17 @@
 package com.example.movie15.domain.inquiry.controller;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.example.movie15.domain.inquiry.dto.InquiryRequestDto;
 import com.example.movie15.domain.inquiry.dto.InquiryResponseDto;
 import com.example.movie15.domain.inquiry.enums.InquiryStatus;
 import com.example.movie15.domain.inquiry.service.InquiryService;
+import com.example.movie15.global.repository.FileRepository;
 import com.example.movie15.global.security.JwtProvider;
+import com.example.movie15.global.service.FileUploaderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +21,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/api/inquiries")
 @RequiredArgsConstructor
@@ -22,17 +30,23 @@ public class InquiryController {
 
     private final InquiryService inquiryService;
     private final JwtProvider jwtProvider;
+    private final FileUploaderService fileUploaderService;
+    private final FileRepository fileRepository;
 
     // 문의 사항 작성
     @PostMapping
     public ResponseEntity<InquiryResponseDto> createInquiry(
-            @RequestBody @Valid InquiryRequestDto dto,
-            @RequestHeader("Authorization") String token) {
+            @RequestPart(name = "inquiry") String inquiryJson,
+            @RequestPart(name = "files", required = false) List<MultipartFile> files,
+            @RequestHeader("Authorization") String token) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        InquiryRequestDto dto = objectMapper.readValue(inquiryJson, InquiryRequestDto.class);
 
         String extractedToken = token.replace("Bearer ", "");
         Long userId = jwtProvider.getUserId(extractedToken);
 
-        InquiryResponseDto response = inquiryService.createInquiry(dto, userId);
+        InquiryResponseDto response = inquiryService.createInquiry(dto, files, userId);
         return ResponseEntity.status(201).body(response);
     }
 
@@ -40,7 +54,7 @@ public class InquiryController {
     @GetMapping("/user")
     public ResponseEntity<Page<InquiryResponseDto>> getUserInquiries(
             @RequestHeader("Authorization") String token,
-            @PageableDefault(size = 15, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         String extractedToken = token.replace("Bearer ", "");
         Long userId = jwtProvider.getUserId(extractedToken);
@@ -53,7 +67,7 @@ public class InquiryController {
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<InquiryResponseDto>> getAllInquiries(
-            @PageableDefault(size = 15, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<InquiryResponseDto> response = inquiryService.getAllInquiries(pageable);
         return ResponseEntity.ok(response);
@@ -64,7 +78,7 @@ public class InquiryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<InquiryResponseDto>> getInquiriesByUserIdForAdmin(
             @PathVariable Long userId,
-            @PageableDefault(size = 15, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<InquiryResponseDto> response = inquiryService.getInquiriesByUserIdForAdmin(userId, pageable);
         return ResponseEntity.ok(response);
