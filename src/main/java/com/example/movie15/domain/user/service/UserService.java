@@ -56,7 +56,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        rabbitUserSignupProducer.userSignupEvent(user.getId()); // rabbitmq
+        rabbitUserSignupProducer.userSignupEvent(user.getId(), user.getTokenExpiryTime()); // rabbitmq
     }
 
     @Transactional
