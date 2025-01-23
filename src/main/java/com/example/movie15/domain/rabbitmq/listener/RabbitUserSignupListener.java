@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -20,7 +22,7 @@ public class RabbitUserSignupListener {
 
         User user = userRepository.findByIdOrElseThrow(userId);
 
-        if (!user.isVerified()) {
+        if (!user.isVerified() && user.getTokenExpiryTime().isBefore(LocalDateTime.now())) {
             userRepository.delete(user);
             log.info("미인증유저 삭제완료: 이메일 : {}", user.getEmail());
         }
