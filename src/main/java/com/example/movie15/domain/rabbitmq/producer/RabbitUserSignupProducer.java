@@ -25,7 +25,7 @@ public class RabbitUserSignupProducer {
                 userId,
                 message -> {
                     message.getMessageProperties().setHeader("x-delay", tokenExpiryInMillis);
-                    message.getMessageProperties().setExpiration(String.valueOf(1_200_000L));
+                    message.getMessageProperties().setExpiration(String.valueOf(tokenExpiryInMillis + 60_000L));
                     return message;
                 }
         );
