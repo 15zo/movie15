@@ -33,10 +33,10 @@ public class PaymentApiController {
 		@RequestBody PaymentDto requestDto) {
 
 		// 토스 결제 승인 요청 실행
-		confirmCheckout(requestDto.getOrderId(), requestDto.getPaymentKey(), requestDto.getAmount());
+		tossPaymentConfirm(requestDto.getOrderId(), requestDto.getPaymentKey(), requestDto.getAmount());
 
 		// 결제 성공 로직 수행
-		paymentService.tossPaymentSuccess(requestDto.getPaymentKey(), requestDto.getOrderId(), requestDto.getAmount());
+		paymentService.paymentSuccessLogic(requestDto.getPaymentKey(), requestDto.getOrderId(), requestDto.getAmount());
 
 		return ResponseEntity.status(HttpStatus.OK).body("예매가 완료 되었습니다");
 	}
@@ -45,15 +45,19 @@ public class PaymentApiController {
 	public ResponseEntity<Void> tossPaymentCancel(
 		@PathVariable Long bookingId,
 		@RequestParam String paymentKey,
-		@RequestParam String cancelReason
-	) {
-		paymentService.tossPaymentCancel(bookingId, paymentKey, cancelReason);
+		@RequestParam String cancelReason) {
+
+		// 토스 결제 취소 요청 실행
+		tossPaymentCancel(paymentKey, cancelReason);
+
+		// 결제 취소 로직 수행
+		paymentService.paymentCancelLogic(bookingId, paymentKey, cancelReason);
 
 		return ResponseEntity.ok().body(null);
 	}
 
 	// 토스 결제 승인 요청 실행
-	public void confirmCheckout(String orderId, String paymentKey, Long amount) {
+	public void tossPaymentConfirm(Long orderId, String paymentKey, Long amount) {
 		PaymentDto paymentDto = new PaymentDto(orderId, paymentKey, amount);
 
 		String responseDto = restClient.post()
@@ -67,7 +71,7 @@ public class PaymentApiController {
 	}
 
 	// 토스 취소 승인 요청 실행
-	public void tossPaymentCancel1(String paymentKey, String cancelReason) {
+	public void tossPaymentCancel(String paymentKey, String cancelReason) {
 
 		String responseDto = restClient.post()
 			.uri(paymentKey + "/cancel")

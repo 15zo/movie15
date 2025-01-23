@@ -34,7 +34,7 @@ public class PaymentService {
 
 	// 결제 성공
 	@Transactional
-	public void tossPaymentSuccess(String paymentKey, String bookingId, Long amount) {
+	public void paymentSuccessLogic(String paymentKey, Long bookingId, Long amount) {
 
 		// 예약 정보를 찾아오기
 		Booking booking = getBooking(bookingId);
@@ -49,7 +49,7 @@ public class PaymentService {
 
 	// 결제 실패
 	@Transactional
-	public void tossPaymentFail(String bookingId) {
+	public void tossPaymentFail(Long bookingId) {
 		// 예약 정보를 찾아오기
 		Booking booking = getBooking(bookingId);
 
@@ -62,7 +62,7 @@ public class PaymentService {
 
 	// 결제 취소
 	@Transactional
-	public void tossPaymentCancel(Long bookingId, String paymentKey, String cancelReason) {
+	public void paymentCancelLogic(Long bookingId, String paymentKey, String cancelReason) {
 		// 예약 정보를 찾아오기
 		Booking booking = bookingRepository.findBookingWithPayment(bookingId);
 
@@ -74,8 +74,8 @@ public class PaymentService {
 		booking.updateBookingStatus(BookingStatus.CANCELED, payment);
 	}
 
-	private Booking getBooking(String bookingId) {
-		return bookingRepository.findById(Long.valueOf(bookingId))
+	private Booking getBooking(Long bookingId) {
+		return bookingRepository.findById(bookingId)
 			.orElseThrow(() -> new NotFoundException(ExceptionType.BOOKING_NOT_FOUND));
 	}
 
