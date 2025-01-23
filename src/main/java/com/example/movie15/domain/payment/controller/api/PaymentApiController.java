@@ -15,6 +15,7 @@ import com.example.movie15.domain.payment.dto.PaymentDto;
 import com.example.movie15.domain.payment.service.PaymentService;
 import com.example.movie15.global.exception.BadValueException;
 import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.TossPaymentException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,7 +66,7 @@ public class PaymentApiController {
 			.body(paymentDto)
 			.retrieve()
 			.onStatus(HttpStatusCode::is4xxClientError, ((request, response) -> {
-				throw new BadValueException(ExceptionType.CHECKOUT_FAIL);
+				throw new TossPaymentException(ExceptionType.TOSS_PAYMENT_CONFIRM_FAIL, paymentKey, orderId, amount);
 			}))
 			.body(String.class);
 	}
@@ -78,7 +79,7 @@ public class PaymentApiController {
 			.body(cancelReason)
 			.retrieve()
 			.onStatus(HttpStatusCode::is4xxClientError, ((request, response) -> {
-				throw new BadValueException(ExceptionType.CHECKOUT_FAIL);
+				throw new TossPaymentException(ExceptionType.TOSS_PAYMENT_CANCEL_FAIL, cancelReason, paymentKey);
 			}))
 			.body(String.class);
 	}
