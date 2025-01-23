@@ -58,8 +58,8 @@ public class PaymentService {
 		booking.updateBookingStatus(BookingStatus.COMPLETED, payment);
 
 		// rabbitmq 호출
-		rabbitPaymentProducer.sendChargeEvent(booking); // 결제성공 이메일 발송
-		rabbitPaymentProducer.movieStartReminderEmail(booking); // 영화시작 30분전 이메일발송 예약
+		rabbitPaymentProducer.sendChargeEvent(booking.getId()); // 결제성공 이메일 발송
+		rabbitPaymentProducer.movieStartReminderEmail(booking.getId()); // 영화시작 30분전 이메일발송 예약
 	}
 
 	// 결제 실패
@@ -89,7 +89,7 @@ public class PaymentService {
 		booking.updateBookingStatus(BookingStatus.CANCELED, payment);
 
 		// rabbitmq 취소 메소드 호출
-		rabbitPaymentProducer.sendCancelEvent(booking);
+		rabbitPaymentProducer.sendCancelEvent(booking.getId());
 
 		return tossPaymentCancel(paymentKey, cancelReason);
 	}
