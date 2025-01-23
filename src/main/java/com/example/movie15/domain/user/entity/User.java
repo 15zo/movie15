@@ -5,8 +5,7 @@ import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.joda.time.LocalDateTime;
-
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

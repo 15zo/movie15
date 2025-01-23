@@ -6,6 +6,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Getter
 public enum ExceptionType {
+    EMAIL_NOT_VERIFIED(HttpStatus.UNAUTHORIZED, "이메일 인증이 완료되지 않았습니다. 이메일을 인증해주세요."),
     SAME_REVIEW(HttpStatus.NOT_FOUND,  "이미 작성된 리뷰와 같습니다. 수정을 원하면 다시 입력해주세요."),
     ALREADY_REVIEW(HttpStatus.NOT_FOUND,  "이미 해당영화에 리뷰를 작성했습니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND,  "리뷰 정보를 찾을 수 없습니다."),
