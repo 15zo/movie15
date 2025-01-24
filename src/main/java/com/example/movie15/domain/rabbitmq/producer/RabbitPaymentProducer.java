@@ -101,10 +101,7 @@ public class RabbitPaymentProducer {
         try {
             rabbitTemplate.convertAndSend(
                     routingKey,
-                    bookingId,
-                    message -> {
-                        return message;
-                    }
+                    bookingId
             );
             log.info("RabbitMQ 메시지 전송 성공. (예약아이디: {})", bookingId);
         } catch (Exception e) {
