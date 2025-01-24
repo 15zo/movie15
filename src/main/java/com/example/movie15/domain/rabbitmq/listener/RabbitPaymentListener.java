@@ -34,7 +34,7 @@ public class RabbitPaymentListener {
      * @param bookingId 예약 ID
      */
     @RabbitListener(queues = QueueBindings.CHARGE_QUEUE)
-    public void chargeEmailMessage(Long bookingId, Channel channel, Message message) throws IOException {
+    public void chargeEmailMessage(Long bookingId, Channel channel, Message message) throws Exception {
         Booking booking = bookingRepository.findBookingWithUser(bookingId);
 
         try {
@@ -45,10 +45,9 @@ public class RabbitPaymentListener {
                     "영화결제가 완료되었습니다! 시간에 맞춰 입장해주세요!"
             );
             processEmailMessage(emailMessage);
-            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-        } catch (EntityNotFoundException e) {
+        } catch (Exception e) {
             log.warn("예약성공메시지 오류 : 예약아이디 : {}", bookingId);
-            channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);  // 재큐하지 않고 DLQ로 이동
         }
     }
 
@@ -59,7 +58,7 @@ public class RabbitPaymentListener {
      * @param bookingId 예약 ID
      */
     @RabbitListener(queues = QueueBindings.CANCEL_QUEUE)
-    public void cancelEmailMessage(Long bookingId, Channel channel, Message message) throws IOException {
+    public void cancelEmailMessage(Long bookingId, Channel channel, Message message) throws Exception {
         Booking booking = bookingRepository.findBookingWithUser(bookingId);
 
         try {
@@ -77,9 +76,9 @@ public class RabbitPaymentListener {
                     "결제취소가 완료되었습니다!"
             );
             processEmailMessage(emailMessage);
-        } catch (EntityNotFoundException e) {
+        } catch (Exception e) {
             log.warn("예약취소메시지오류 : 예약아이디 : {}", bookingId);
-            channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);  // 재큐하지 않고 DLQ로 이동
         }
     }
 
@@ -89,7 +88,7 @@ public class RabbitPaymentListener {
      * @param bookingId 예약 ID
      */
     @RabbitListener(queues = QueueBindings.EMAIL_DELAY_QUEUE)
-    public void delayEmailMessage(Long bookingId, Channel channel, Message message) throws IOException {
+    public void delayEmailMessage(Long bookingId, Channel channel, Message message) throws Exception {
         Booking booking = bookingRepository.findBookingWithUser(bookingId);
 
         try {
@@ -110,9 +109,9 @@ public class RabbitPaymentListener {
             } else {
                 log.info("결제가 취소된 메시지입니다. 이메일을 보내지 않습니다.");
             }
-        } catch (EntityNotFoundException e) {
+        } catch (Exception e) {
             log.warn("예약지연메시지오류 : 예약아이디 : {}", bookingId);
-            channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            channel.basicNack(message.getMessageProperties().getDeliveryTag(),false, false);  // 재큐하지 않고 DLQ로 이동
         }
 
     }
