@@ -25,26 +25,19 @@ public class InquiryController {
 
     // 문의 사항 작성
     @PostMapping
-    public ResponseEntity<InquiryResponseDto> createInquiry(
-            @RequestBody @Valid InquiryRequestDto dto,
+    public ResponseEntity<InquiryResponseDto> createInquiry(@RequestBody @Valid InquiryRequestDto dto,
             @RequestHeader("Authorization") String token) {
-
-        String extractedToken = token.replace("Bearer ", "");
-        Long userId = jwtProvider.getUserId(extractedToken);
-
+        Long userId = jwtProvider.getUserId(token.replace("Bearer ", ""));
         InquiryResponseDto response = inquiryService.createInquiry(dto, userId);
         return ResponseEntity.status(201).body(response);
     }
 
     // 문의 사항 조회(사용자 본인)
     @GetMapping("/user")
-    public ResponseEntity<Page<InquiryResponseDto>> getUserInquiries(
-            @RequestHeader("Authorization") String token,
+    public ResponseEntity<Page<InquiryResponseDto>> getUserInquiries(@RequestHeader("Authorization") String token,
             @PageableDefault(size = 15, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        String extractedToken = token.replace("Bearer ", "");
-        Long userId = jwtProvider.getUserId(extractedToken);
-
+        Long userId = jwtProvider.getUserId(token.replace("Bearer ", ""));
         Page<InquiryResponseDto> inquiries = inquiryService.getUserInquiries(userId, pageable);
         return ResponseEntity.ok(inquiries);
     }
@@ -62,8 +55,7 @@ public class InquiryController {
     // 문의 사항 조회(관리자 -> 특정 사용자)
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<InquiryResponseDto>> getInquiriesByUserIdForAdmin(
-            @PathVariable Long userId,
+    public ResponseEntity<Page<InquiryResponseDto>> getInquiriesByUserIdForAdmin(@PathVariable Long userId,
             @PageableDefault(size = 15, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<InquiryResponseDto> response = inquiryService.getInquiriesByUserIdForAdmin(userId, pageable);
@@ -72,9 +64,7 @@ public class InquiryController {
 
     // 문의 사항 수정
     @PatchMapping("/{id}")
-    public ResponseEntity<InquiryResponseDto> updateInquiry(
-            @PathVariable Long id,
-            @RequestBody @Valid InquiryRequestDto dto,
+    public ResponseEntity<InquiryResponseDto> updateInquiry(@PathVariable Long id, @RequestBody @Valid InquiryRequestDto dto,
             @RequestHeader("Authorization") String token) {
 
         String extractedToken = token.replace("Bearer ", "");
@@ -86,14 +76,10 @@ public class InquiryController {
 
     // 문의 사항 삭제(사용자) -> 답변 상태: ANSWERED일 경우, 삭제 불가.
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteInquiry(
-            @PathVariable Long id,
-            @RequestHeader("Authorization") String token) {
+    public ResponseEntity<String> deleteInquiry(@PathVariable Long id, @RequestHeader("Authorization") String token) {
 
-        String extractedToken = token.replace("Bearer ", "");
-        Long userId = jwtProvider.getUserId(extractedToken);
-
-        inquiryService.deleteInquiry(id, extractedToken);
+        Long userId = jwtProvider.getUserId(token.replace("Bearer ", ""));
+        inquiryService.deleteInquiry(id, userId);
         return ResponseEntity.ok("삭제되었습니다");
     }
 
@@ -101,7 +87,6 @@ public class InquiryController {
     @DeleteMapping("/admin/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteInquiryByAdmin(@PathVariable Long id) {
-
         inquiryService.deleteInquiryByAdmin(id);
         return ResponseEntity.ok("해당 문의는 관리자가 삭제했습니다.");
     }
@@ -109,9 +94,7 @@ public class InquiryController {
     // 문의 사항 상태 변경(관리자)
     @PatchMapping("/admin/status/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> updateInquiryStatus(
-            @PathVariable Long id,
-            @RequestParam InquiryStatus status) {
+    public ResponseEntity<String> updateInquiryStatus(@PathVariable Long id, @RequestParam InquiryStatus status) {
 
         inquiryService.updateInquiryStatus(id, status);
         return ResponseEntity.ok("문의 사항의 상태가 변경됐습니다.");

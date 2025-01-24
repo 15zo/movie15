@@ -7,15 +7,13 @@ import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
 import com.example.movie15.domain.user.dto.UserRequestDto;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
-import com.example.movie15.global.exception.BadValueException;
-import com.example.movie15.global.exception.ExceptionType;
-import com.example.movie15.global.exception.ForbiddenException;
-import com.example.movie15.global.exception.WrongAccessException;
+import com.example.movie15.global.exception.*;
 import com.example.movie15.global.security.AuthenticationScheme;
 import com.example.movie15.global.security.JwtProvider;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -60,14 +59,9 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUserInfo(Long userId, String token, UpdateUserRequestDto updateUserRequestDto) {
-        Long requesterId = jwtProvider.getUserId(token);
-
-        if (!userId.equals(requesterId)) {
-            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
-        }
-
-        User user = userRepository.findByIdOrElseThrow(userId);
+    public void updateUserInfo(Long userId, UpdateUserRequestDto updateUserRequestDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
         if (updateUserRequestDto.getNewPassword() != null) {
             validatePasswordChange(user, updateUserRequestDto);
@@ -85,15 +79,11 @@ public class UserService {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
         }
 
-        Authentication authentication = this.authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // 액세스 토큰 생성
+        String accessToken = jwtProvider.generateAccessToken(user.getId());
 
-        // 액세스 토큰, 리프레시 토큰 생성
-        String accessToken = jwtProvider.generateToken(authentication, user.getId(), "ACCESS_TOKEN");
-        String refreshToken = jwtProvider.generateToken(null, user.getId(), "REFRESH_TOKEN");
-
+        // 리프레시 토큰 생성  및 Redis 저장
+        String refreshToken = jwtProvider.generateRefreshToken(user.getId());
         jwtProvider.storeRefreshToken(user.getId(), refreshToken);
 
         return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken, refreshToken);
@@ -109,36 +99,46 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Long userId, String token, String password) {
-        Long requesterId = jwtProvider.getUserId(token);
+    public void deleteUser(Long userId, String password) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
-        if (!userId.equals(requesterId)) {
-            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new ForbiddenException(ExceptionType.WRONG_PASSWORD);
         }
 
-        checkPassword(userId, password);
-
-        User user = userRepository.findByIdOrElseThrow(userId);
-        user.updateIsDeleted();
-        userRepository.save(user);
+        userRepository.delete(user);
     }
 
     @Transactional
     public void logout(HttpServletRequest request) {
         String token = extractTokenFromRequest(request);
-        if (!jwtProvider.validateToken(token, "ACCESS_TOKEN")) {
+
+        // 토큰 검증
+        if (!jwtProvider.validateToken(token)) {
             throw new WrongAccessException(ExceptionType.WRONG_TOKEN);
         }
 
-        jwtProvider.invalidateToken(token);
+        // 토큰을 블랙리스트에 등록
+        jwtProvider.blacklistToken(token);
+        log.info("로그아웃된 토큰이 블랙리스트에 등록됐습니다: {}", token);
     }
 
-    public String extractTokenFromRequest(HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
+    public JwtAuthResponse refreshToken(String refreshToken) {
+        if (!jwtProvider.validateToken(refreshToken)) {
+            throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
         }
-        return jwtProvider.extractToken(authorizationHeader);
+
+        Long userId = jwtProvider.getUserId(refreshToken);
+        if (!jwtProvider.validateStoredRefreshToken(userId, refreshToken)) {
+            throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
+        }
+
+        String newAccessToken = jwtProvider.generateAccessToken(userId);
+        String newRefreshToken = jwtProvider.generateRefreshToken(userId);
+        jwtProvider.storeRefreshToken(userId, newRefreshToken);
+
+        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), newAccessToken, newRefreshToken);
     }
 
     private void validatePasswordChange(User user, UpdateUserRequestDto dto) {
@@ -151,21 +151,11 @@ public class UserService {
         }
     }
 
-    public JwtAuthResponse refreshToken(String refreshToken) {
-        if (!jwtProvider.validateRefreshToken(refreshToken)) {
-            throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
+    public String extractTokenFromRequest(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
         }
-
-        Long userId = jwtProvider.getUserId(refreshToken);
-        String storedRefreshToken = jwtProvider.getRefreshTokenFromRedis(userId);
-        if (!refreshToken.equals(storedRefreshToken)) {
-            throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
-        }
-
-        User user = userRepository.findByIdOrElseThrow(userId);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), null);
-
-        String newAccessToken = jwtProvider.generateToken(authentication, userId, "ACCESS_TOKEN");
-        return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), newAccessToken);
+        return jwtProvider.extractToken(authorizationHeader);
     }
 }

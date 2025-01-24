@@ -37,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/user/refresh",
             "/api/error",
             "/api/verify",
-            "/api/mvoies/**",
+            "/api/movies/**",
             "/api/cinemas/**"
     };
 
@@ -45,26 +45,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterchain)
             throws ServletException, IOException {
 
+        String requestURI = request.getRequestURI();
+
         // 화이트 리스트 경로는 필터를 생략
         if (isWhiteListed(request.getRequestURI())) {
+            log.info("화이트리스트 경로 요청: {} - 인증 생략", requestURI);
             filterchain.doFilter(request, response);
-
             return;
         }
-
-        this.authenticate(request);
-        filterchain.doFilter(request, response);
     }
 
-    // 화이트 리스트 경로 확인
+    // 요청 경로가 화이트리스트인지 확인
     private boolean isWhiteListed(String path) {
         for (String whiteListedPath : WHITE_LIST) {
             if (path.startsWith(whiteListedPath)) {
-
                 return true;
             }
         }
-
         return false;
     }
 
@@ -72,16 +69,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void authenticate(HttpServletRequest request) {
         String token = this.getTokenFromRequest(request);
 
-        if (!StringUtils.hasText(token) || !jwtProvider.validateToken(token, "ACCESS_TOKEN")) {
+        // 블랙리스트 확인
+        if (jwtProvider.isBlacklisted(token)) {
+            log.warn("블랙리스트에 등록된 토큰입니다: {}", token);
+            throw new BadValueException(ExceptionType.INVALID_TOKEN);
+        }
+
+        // 토큰 유효성 검사
+        if (!StringUtils.hasText(token) || !jwtProvider.validateToken(token)) {
+            log.warn("유효하지 않은 토큰입니다.");
             return;
         }
 
-        String username = this.jwtProvider.getUsername(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        // 사용자 인증 처리
+        Long userId = jwtProvider.getUserId(token);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(String.valueOf(userId));
 
         setAuthentication(request, userDetails);
     }
 
+    // 요청 헤더에서 토큰 추출
     private String getTokenFromRequest(HttpServletRequest request) {
         final String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String headerPrefix = "Bearer ";
@@ -96,10 +103,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
     }
 
-
-
+    // SecurityContext에 인증 객체 저장
     private void setAuthentication(HttpServletRequest request, UserDetails userDetails) {
-        // 찾아온 사용자 정보로 인증 객체를 생성
         UsernamePasswordAuthenticationToken authenticaton = new UsernamePasswordAuthenticationToken(
                 userDetails, userDetails.getPassword(), userDetails.getAuthorities());
         authenticaton.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

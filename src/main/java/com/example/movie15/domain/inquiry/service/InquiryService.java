@@ -72,11 +72,9 @@ public class InquiryService {
 
     // 문의 사항 삭제(사용자)
     @Transactional
-    public void deleteInquiry(Long id, String token) {
+    public void deleteInquiry(Long id, Long userId) {
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
-
-        Long userId = jwtProvider.getUserId(token);
 
         if (!inquiry.getUser().getId().equals(userId)) {
             throw new ForbiddenException(ExceptionType.INQUIRY_FORBIDDEN);

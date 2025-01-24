@@ -35,7 +35,8 @@ public class UserController {
                                                  @Valid @RequestBody UpdateUserRequestDto updateUserRequestDto) {
 
         String token = jwtProvider.extractToken(headerValue);
-        userService.updateUserInfo(id, token, updateUserRequestDto);
+        Long userId = jwtProvider.getUserId(token);
+        userService.updateUserInfo(userId, updateUserRequestDto);
         return ResponseEntity.status(HttpStatus.OK).body("회원 정보가 수정되었습니다.");
     }
 
@@ -63,11 +64,11 @@ public class UserController {
 
     // 회원탈퇴
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id,
-                                             @RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue,
+    public ResponseEntity<String> deleteUser(@PathVariable Long id, @RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue,
                                              @RequestParam String password) {
         String token = jwtProvider.extractToken(headerValue);
-        userService.deleteUser(id, token, password);
+        Long userId = jwtProvider.getUserId(token);
+        userService.deleteUser(userId, password);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원탈퇴가 완료되었습니다.");
     }
 
