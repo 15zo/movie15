@@ -52,7 +52,7 @@ public class UserService {
         // <<이메일 보내기>> 이메일 인증 토큰 생성 및 설정.
         String token = emailSenderService.sendVerificationEmail(user.getEmail()); // 이메일 전송 후 토큰반환받음.
         user.setVerificationToken(token); // 발급된 토큰 user 에 설정
-        user.setTokenExpiryTime(1); // 토큰 유효시간: 10분
+        user.setTokenExpiryTime(10); // 토큰 유효시간: 10분
 
         userRepository.save(user);
 

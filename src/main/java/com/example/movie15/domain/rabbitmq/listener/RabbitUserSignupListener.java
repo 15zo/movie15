@@ -40,5 +40,6 @@ public class RabbitUserSignupListener {
     @RabbitListener(queues = QueueBindings.GLOBAL_DLQ)
     public void processDeadLetterQueue(Long userId, Channel channel, Message message) throws IOException {
         log.warn("RabbitMQ : 처리 실패한 메시지 발견 : {}", userId);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
 }
