@@ -8,11 +8,16 @@ import com.example.movie15.domain.rabbitmq.common.RedisKey;
 import com.example.movie15.domain.rabbitmq.service.RabbitEmailService;
 import com.example.movie15.global.exception.ExceptionType;
 import com.example.movie15.global.exception.NotFoundException;
+import com.rabbitmq.client.Channel;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
@@ -29,17 +34,22 @@ public class RabbitPaymentListener {
      * @param bookingId 예약 ID
      */
     @RabbitListener(queues = QueueBindings.CHARGE_QUEUE)
-    public void chargeEmailMessage(Long bookingId) {
+    public void chargeEmailMessage(Long bookingId, Channel channel, Message message) throws IOException {
         Booking booking = bookingRepository.findBookingWithUser(bookingId);
 
-        EmailMessage emailMessage = createEmailMessage(
-                bookingId,
-                booking.getUser().getEmail(),
-                "영화결제가 완료되었습니다.",
-                "영화결제가 완료되었습니다! 시간에 맞춰 입장해주세요!"
-        );
-
-        processEmailMessage(emailMessage);
+        try {
+            EmailMessage emailMessage = createEmailMessage(
+                    bookingId,
+                    booking.getUser().getEmail(),
+                    "영화결제가 완료되었습니다.",
+                    "영화결제가 완료되었습니다! 시간에 맞춰 입장해주세요!"
+            );
+            processEmailMessage(emailMessage);
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        } catch (EntityNotFoundException e) {
+            log.warn("예약성공메시지 오류 : 예약아이디 : {}", bookingId);
+            channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+        }
     }
 
     /**
@@ -49,23 +59,28 @@ public class RabbitPaymentListener {
      * @param bookingId 예약 ID
      */
     @RabbitListener(queues = QueueBindings.CANCEL_QUEUE)
-    public void cancelEmailMessage(Long bookingId) {
+    public void cancelEmailMessage(Long bookingId, Channel channel, Message message) throws IOException {
         Booking booking = bookingRepository.findBookingWithUser(bookingId);
 
-        Long deleteRedis = redisTemplate.opsForHash().delete(RedisKey.REMINDER_KEY, bookingId); // redis 에서 삭제
-        if (deleteRedis > 0) {
-            log.info("예약 메시지가 Redis 에서 성공적으로 취소되었습니다. (예약 ID: {})", bookingId);
-        } else {
-            log.warn("Redis 에서 취소할 메시지를 찾을 수 없습니다. (예약 ID: {})", bookingId);
-        }
+        try {
+            Long deleteRedis = redisTemplate.opsForHash().delete(RedisKey.REMINDER_KEY, bookingId); // redis 에서 삭제
+            if (deleteRedis > 0) {
+                log.info("예약 메시지가 Redis 에서 성공적으로 취소되었습니다. (예약 ID: {})", bookingId);
+            } else {
+                log.warn("Redis 에서 취소할 메시지를 찾을 수 없습니다. (예약 ID: {})", bookingId);
+            }
 
-        EmailMessage emailMessage = createEmailMessage(
-                bookingId,
-                booking.getUser().getEmail(),
-                "영화결제가 취소되었습니다.",
-                "결제취소가 완료되었습니다!"
-        );
-        processEmailMessage(emailMessage);
+            EmailMessage emailMessage = createEmailMessage(
+                    bookingId,
+                    booking.getUser().getEmail(),
+                    "영화결제가 취소되었습니다.",
+                    "결제취소가 완료되었습니다!"
+            );
+            processEmailMessage(emailMessage);
+        } catch (EntityNotFoundException e) {
+            log.warn("예약취소메시지오류 : 예약아이디 : {}", bookingId);
+            channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+        }
     }
 
     /**
@@ -74,26 +89,32 @@ public class RabbitPaymentListener {
      * @param bookingId 예약 ID
      */
     @RabbitListener(queues = QueueBindings.EMAIL_DELAY_QUEUE)
-    public void delayEmailMessage(Long bookingId) {
+    public void delayEmailMessage(Long bookingId, Channel channel, Message message) throws IOException {
         Booking booking = bookingRepository.findBookingWithUser(bookingId);
 
-        // 이메일 메시지 생성
-        EmailMessage emailMessage = createEmailMessage(
-                bookingId,
-                booking.getUser().getEmail(),
-                "곧 영화가 시작합니다!",
-                String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", booking.getRunTime().getStartTime())
-        );
+        try {
+            // 이메일 메시지 생성
+            EmailMessage emailMessage = createEmailMessage(
+                    bookingId,
+                    booking.getUser().getEmail(),
+                    "곧 영화가 시작합니다!",
+                    String.format("예매하신 영화가 30분 후에 시작됩니다. 입장을 준비해주세요! 영화 시간: %s", booking.getRunTime().getStartTime())
+            );
 
-        // Redis 에서 EmailMessage 를 가져옴
-        Long redisBookingId = (Long) redisTemplate.opsForHash().get(RedisKey.REMINDER_KEY, bookingId);
+            // Redis 에서 EmailMessage 를 가져옴
+            Long redisBookingId = (Long) redisTemplate.opsForHash().get(RedisKey.REMINDER_KEY, bookingId);
 
-        // null 이면 발송하지 않고 취소된 메시지라는 로그만 남김.
-        if (redisBookingId != null) {
-            processEmailMessage(emailMessage);
-        } else {
-            log.info("결제가 취소된 메시지입니다. 이메일을 보내지 않습니다.");
+            // null 이면 발송하지 않고 취소된 메시지라는 로그만 남김.
+            if (redisBookingId != null) {
+                processEmailMessage(emailMessage);
+            } else {
+                log.info("결제가 취소된 메시지입니다. 이메일을 보내지 않습니다.");
+            }
+        } catch (EntityNotFoundException e) {
+            log.warn("예약지연메시지오류 : 예약아이디 : {}", bookingId);
+            channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
         }
+
     }
 
     /**

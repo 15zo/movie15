@@ -9,7 +9,6 @@ public final class QueueBindings {
     // Exchange 이름
     public static final String USER_SIGNUP_EXCHANGE = "userSignupExchange";
     public static final String DELAYED_EXCHANGE = "delayedExchange";
-    public static final String BASE_EXCHANGE = "";
 
     // Routing Key 이름
     public static final String USER_SIGNUP_KEY = "userSignupKey";
@@ -22,4 +21,9 @@ public final class QueueBindings {
     public static final String EMAIL_DELAY_QUEUE = "emailDelayQueue";
     public static final String CHARGE_QUEUE = "chargeQueue";
     public static final String CANCEL_QUEUE = "cancelQueue";
+
+    // Dead Letter 관련 추가
+    public static final String GLOBAL_DLQ = "globalDeadLetterQueue"; // 큐이름
+    public static final String GLOBAL_DLQ_KEY = "globalDeadLetterKey"; // 라우팅키
+    public static final String GLOBAL_DLX = "globalDeadLetterExchange"; // Exchange 이름
 }

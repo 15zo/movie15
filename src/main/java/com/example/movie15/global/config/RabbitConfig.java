@@ -2,10 +2,7 @@ package com.example.movie15.global.config;
 
 import com.example.movie15.domain.rabbitmq.common.QueueBindings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.CustomExchange;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -41,11 +38,7 @@ public class RabbitConfig {
         return new RabbitTemplate(connectionFactory);
     }
 
-    // 2. 교환 및 큐 생성
-    /**
-     * Delayed Exchange 설정
-     * @return CustomExchange 객체
-     */
+    // 2. 교환기생성(Exchange)
     @Bean
     public CustomExchange delayedExchange() {
         log.info("delayedExchange 구성 중");
@@ -61,10 +54,6 @@ public class RabbitConfig {
         };
     }
 
-    /**
-     * Delayed Exchange 설정
-     * @return CustomExchange 객체
-     */
     @Bean
     public CustomExchange userSignupExchange() {
         log.info("userSignupExchange 구성 중");
@@ -80,49 +69,61 @@ public class RabbitConfig {
         };
     }
 
-    /**
-     * Delayed Email Queue 생성
-     * @return Queue 객체
-     */
+    @Bean
+    public CustomExchange deadLetterExchange() {
+        log.info("deadLetterExchange 구성 중");
+        return new CustomExchange(
+                QueueBindings.GLOBAL_DLX,
+                "direct",
+                true,
+                false
+        );
+    }
+
+    // 3. 큐 생성
     @Bean
     public Queue emailDelayQueue() {
         log.info("emailDelayQueue 생성 중");
-        return new Queue(QueueBindings.EMAIL_DELAY_QUEUE, true);
+        return QueueBuilder.durable(QueueBindings.EMAIL_DELAY_QUEUE)
+                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .build();
     }
 
-    /**
-     * chargeQueue 생성
-     * @return Queue 객체
-     */
     @Bean
     public Queue chargeQueue() {
         log.info("chargeQueue 생성 중");
-        return new Queue(QueueBindings.CHARGE_QUEUE, true);
+        return QueueBuilder.durable(QueueBindings.CHARGE_QUEUE)
+                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .build();
     }
 
-    /**
-     * cancelQueue 생성
-     * @return Queue 객체
-     */
     @Bean
     public Queue cancelQueue() {
         log.info("cancelQueue 생성 중");
-        return new Queue(QueueBindings.CANCEL_QUEUE, true);
+        return QueueBuilder.durable(QueueBindings.CANCEL_QUEUE)
+                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .build();
     }
 
     @Bean
     public Queue userSignupQueue() {
         log.info("userSignupQueue 생성 중");
-        return new Queue(QueueBindings.USER_SIGNUP_QUEUE, true);
+        return QueueBuilder.durable(QueueBindings.USER_SIGNUP_QUEUE)
+                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .build();
     }
 
-    // 3. 바인딩 설정
-    /**
-     * Delayed Exchange 와 Email Queue 바인딩
-     * @param emailDelayQueue 큐
-     * @param delayedExchange 딜레이 익스체인지
-     * @return Binding 객체
-     */
+    @Bean
+    public Queue globalDeadLetterQueue() {
+        log.info("DLQ 생성 중");
+        return new Queue(QueueBindings.GLOBAL_DLQ, true);
+    }
+
+    // 4. 바인딩 설정 (교환기와 큐를 연결)
     @Bean
     public Binding emailDelayQueueBinding(Queue emailDelayQueue, CustomExchange delayedExchange) {
         log.info("emailDelayQueue 를 delayedExchange 에 라우팅 키 ‘emailDelayKey’로 바인딩");
@@ -133,12 +134,6 @@ public class RabbitConfig {
                 .noargs();
     }
 
-    /**
-     * Delayed Exchange 와 signup Queue 바인딩
-     * @param userSignupQueue 큐
-     * @param userSignupExchange 딜레이 익스체인지
-     * @return Binding 객체
-     */
     @Bean
     public Binding userSignupQueueBinding(Queue userSignupQueue, CustomExchange userSignupExchange) {
         log.info("userSignupQueue 를 userSignupExchange 에 라우팅 키 ‘userSignupKey’로 바인딩");
@@ -146,6 +141,16 @@ public class RabbitConfig {
                 .bind(userSignupQueue)
                 .to(userSignupExchange)
                 .with(QueueBindings.USER_SIGNUP_KEY)
+                .noargs();
+    }
+
+    @Bean
+    public Binding globalDLQBinding(Queue globalDeadLetterQueue, CustomExchange deadLetterExchange) {
+        log.info("globalDeadLetterQueue 를 deadLetterExchange 에 라우팅 키 ‘globalDLQKey’로 바인딩");
+        return BindingBuilder
+                .bind(globalDeadLetterQueue)
+                .to(deadLetterExchange)
+                .with(QueueBindings.GLOBAL_DLQ_KEY)
                 .noargs();
     }
 }
