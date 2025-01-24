@@ -83,8 +83,6 @@ public class RabbitPaymentProducer {
                     bookingId,
                     message -> {
                         message.getMessageProperties().setHeader("x-delay", delay); // 큐 대기시간 설정
-                        // 만료시간을 큐 대기시간보다 +10분 더
-                        message.getMessageProperties().setExpiration(String.valueOf(delay + TEN_MINUTE));
                         return message;
                     });
             log.info("RabbitMQ 딜레이 메시지 전송 성공. (예약아이디: {})", bookingId);
@@ -103,11 +101,7 @@ public class RabbitPaymentProducer {
         try {
             rabbitTemplate.convertAndSend(
                     routingKey,
-                    bookingId,
-                    message -> {
-                        message.getMessageProperties().setExpiration(String.valueOf(TEN_MINUTE));
-                        return message;
-                    }
+                    bookingId
             );
             log.info("RabbitMQ 메시지 전송 성공. (예약아이디: {})", bookingId);
         } catch (Exception e) {
