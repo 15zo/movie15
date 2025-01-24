@@ -39,7 +39,12 @@ public class UserService {
 
     @Transactional
     public void signup(UserRequestDto userRequestDto) throws MessagingException {
-        if (userRepository.existsByEmail(userRequestDto.getEmail())) {
+        Optional<User> existingUser = userRepository.findByEmail(userRequestDto.getEmail());
+
+        if (existingUser.isPresent()) {
+            if(existingUser.get().isDeleted()) {
+                throw new BadValueException(ExceptionType.DELETED_EMAIL_REUSE);
+            }
             throw new BadValueException(ExceptionType.EXIST_USER);
         }
 

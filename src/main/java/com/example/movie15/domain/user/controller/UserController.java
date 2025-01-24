@@ -64,7 +64,7 @@ public class UserController {
 
     // 회원탈퇴
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id, @RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue,
+    public ResponseEntity<String> deleteUser(@RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue,
                                              @RequestParam String password) {
         String token = jwtProvider.extractToken(headerValue);
         Long userId = jwtProvider.getUserId(token);
@@ -74,7 +74,8 @@ public class UserController {
 
     // 리프레쉬 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<CommonResponseBody<JwtAuthResponse>> refresh(@RequestHeader(HttpHeaders.AUTHORIZATION) String refreshToken) {
+    public ResponseEntity<CommonResponseBody<JwtAuthResponse>> refresh(@RequestHeader(HttpHeaders.AUTHORIZATION) String headerValue) {
+        String refreshToken = jwtProvider.extractToken(headerValue);
         JwtAuthResponse authResponse = userService.refreshToken(refreshToken);
         return ResponseEntity.ok(new CommonResponseBody<>("리프레쉬 토큰이 갱신됐습니다.", authResponse));
     }

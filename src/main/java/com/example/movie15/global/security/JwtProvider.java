@@ -1,5 +1,8 @@
 package com.example.movie15.global.security;
 
+import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.ForbiddenException;
+import com.example.movie15.global.exception.WrongAccessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,7 +30,7 @@ public class JwtProvider {
     @Value("${jwt.access-expiry-millis}")
     private long accessExpiryMillis;
 
-    @Value("{jwt.refresh-expiry-millis}")
+    @Value("${jwt.refresh-expiry-millis}")
     private long refreshExpiryMillis;
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -65,7 +68,7 @@ public class JwtProvider {
         return generateToken(userId, refreshExpiryMillis);
     }
 
-    // 토큰 추출
+    // Authorization 헤더에서 토큰 추출
     public String extractToken(String headerValue) {
         if (headerValue != null && headerValue.startsWith("Bearer ")) {
             return headerValue.substring(7);
@@ -77,10 +80,21 @@ public class JwtProvider {
     // 토큰 검증
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
+            if (isBlacklisted(token)) {
+                throw new WrongAccessException(ExceptionType.BLACKLISTED_TOKEN);
+            }
+
+            Claims claims = Jwts.parser()
                     .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                     .build()
-                    .parseClaimsJws(token);
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            // 만료된 토큰인지 확인
+            if (claims.getExpiration().before(new Date())) {
+                throw new WrongAccessException(ExceptionType.EXPIRED_TOKEN);
+            }
+
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("유효하지 않은 토큰: {}", e.getMessage());
@@ -98,8 +112,8 @@ public class JwtProvider {
                 .getSubject());
     }
 
-    // JWT에서 사용자 역할을 확인 후 Admin 권한이 있는지 검증
-    public boolean isAdmin(String token) {
+    // 토큰을 통해 Admin 권한이 있는지 검증
+    public boolean hasAdminRole(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .build()
@@ -107,7 +121,10 @@ public class JwtProvider {
                 .getBody();
 
         String role = claims.get("role", String.class);
-        return "ADMIN".equalsIgnoreCase(role);
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        }
+        return true;
     }
 
     // 리프레시 토큰 저장(Redis)
@@ -122,7 +139,25 @@ public class JwtProvider {
         String redisKey = "refreshToken:" + userId;
         String storedToken = (String) redisTemplate.opsForValue().get(redisKey);
         return refreshToken.equals(storedToken);
+    }
 
+    // Redis 키의 TTL 확인(리프레시 토큰, 블랙리스트 토큰 만료 시간)
+    public Long getKeyTTL(String key) {
+        Long ttl = redisTemplate.getExpire(key, TimeUnit.MILLISECONDS);
+        if (ttl == null || ttl < 0) {
+            log.warn("Redis 키의 TTL이 설정되지 않았거나 만료됐습니다: {}", key);
+        }
+        return ttl;
+    }
+
+    // Redis 키 삭제
+    public void deleteKey(String key) {
+       Boolean deleted = redisTemplate.delete(key);
+       if (Boolean.TRUE.equals(deleted)) {
+           log.info("Redis 키 삭제 완료: {}", key);
+       } else {
+           log.warn("Redis 키 삭제 실패 또는 키가 존재하지 않습니다: {}", key);
+       }
     }
 
     // 토큰 블랙리스트 처리
@@ -139,7 +174,7 @@ public class JwtProvider {
         return redisTemplate.hasKey(redisKey);
     }
 
-    // 토큰 남은 만료 시간 계산
+    // 토큰 남은 만료 시간 계산(액세스 토큰 만료 시간)
     private long getRemainingExpiry(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))

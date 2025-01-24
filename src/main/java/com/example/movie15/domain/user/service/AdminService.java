@@ -89,7 +89,7 @@ public class AdminService {
             throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
 
-        if (!jwtProvider.isAdmin(token)) {
+        if (!jwtProvider.hasAdminRole(token)) {
             throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
     }
