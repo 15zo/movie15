@@ -4,8 +4,6 @@ import com.example.movie15.domain.booking.entity.Booking;
 import com.example.movie15.domain.booking.repository.BookingRepository;
 import com.example.movie15.domain.rabbitmq.common.QueueBindings;
 import com.example.movie15.domain.rabbitmq.common.RedisKey;
-import com.example.movie15.global.exception.ExceptionType;
-import com.example.movie15.global.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
