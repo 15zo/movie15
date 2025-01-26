@@ -23,7 +23,11 @@ public final class QueueBindings {
     public static final String CANCEL_QUEUE = "cancelQueue";
 
     // Dead Letter 관련 추가
-    public static final String GLOBAL_DLQ = "globalDeadLetterQueue"; // 큐이름
-    public static final String GLOBAL_DLQ_KEY = "globalDeadLetterKey"; // 라우팅키
-    public static final String GLOBAL_DLX = "globalDeadLetterExchange"; // Exchange 이름
+    public static final String USER_DLQ = "userDeadLetterQueue"; // 큐이름
+    public static final String USER_DLQ_KEY = "userDeadLetterKey"; // 라우팅키
+    public static final String USER_DLX = "userDeadLetterExchange"; // Exchange 이름
+
+    public static final String PAYMENT_DLQ = "paymentDeadLetterQueue";
+    public static final String PAYMENT_DLQ_KEY = "paymentDeadLetterKey";
+    public static final String PAYMENT_DLX = "paymentDeadLetterExchange";
 }

@@ -20,7 +20,6 @@ public class RabbitConfig {
      */
     @Bean
     public ConnectionFactory connectionFactory() {
-        log.info("RabbitMQ 연결 구성 중");
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
         connectionFactory.setUsername("guest");
         connectionFactory.setPassword("guest");
@@ -34,14 +33,12 @@ public class RabbitConfig {
      */
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        log.info("RabbitTemplate 생성 중");
         return new RabbitTemplate(connectionFactory);
     }
 
     // 2. 교환기생성(Exchange)
     @Bean
     public CustomExchange delayedExchange() {
-        log.info("delayedExchange 구성 중");
         return new CustomExchange(
                 QueueBindings.DELAYED_EXCHANGE,
                 "x-delayed-message", // 지연 메시지를 위한 타입
@@ -56,7 +53,6 @@ public class RabbitConfig {
 
     @Bean
     public CustomExchange userSignupExchange() {
-        log.info("userSignupExchange 구성 중");
         return new CustomExchange(
                 QueueBindings.USER_SIGNUP_EXCHANGE,
                 "x-delayed-message",
@@ -70,10 +66,19 @@ public class RabbitConfig {
     }
 
     @Bean
-    public CustomExchange deadLetterExchange() {
-        log.info("deadLetterExchange 구성 중");
+    public CustomExchange userDeadLetterExchange() {
         return new CustomExchange(
-                QueueBindings.GLOBAL_DLX,
+                QueueBindings.USER_DLX,
+                "direct",
+                true,
+                false
+        );
+    }
+
+    @Bean
+    public CustomExchange paymentDeadLetterExchange() {
+        return new CustomExchange(
+                QueueBindings.PAYMENT_DLX,
                 "direct",
                 true,
                 false
@@ -83,50 +88,50 @@ public class RabbitConfig {
     // 3. 큐 생성
     @Bean
     public Queue emailDelayQueue() {
-        log.info("emailDelayQueue 생성 중");
         return QueueBuilder.durable(QueueBindings.EMAIL_DELAY_QUEUE)
-                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
-                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .withArgument("x-dead-letter-exchange", QueueBindings.PAYMENT_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.PAYMENT_DLQ_KEY)
                 .build();
     }
 
     @Bean
     public Queue chargeQueue() {
-        log.info("chargeQueue 생성 중");
         return QueueBuilder.durable(QueueBindings.CHARGE_QUEUE)
-                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
-                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .withArgument("x-dead-letter-exchange", QueueBindings.PAYMENT_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.PAYMENT_DLQ_KEY)
                 .build();
     }
 
     @Bean
     public Queue cancelQueue() {
-        log.info("cancelQueue 생성 중");
         return QueueBuilder.durable(QueueBindings.CANCEL_QUEUE)
-                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
-                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .withArgument("x-dead-letter-exchange", QueueBindings.PAYMENT_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.PAYMENT_DLQ_KEY)
                 .build();
     }
 
     @Bean
     public Queue userSignupQueue() {
-        log.info("userSignupQueue 생성 중");
         return QueueBuilder.durable(QueueBindings.USER_SIGNUP_QUEUE)
-                .withArgument("x-dead-letter-exchange", QueueBindings.GLOBAL_DLX)
-                .withArgument("x-dead-letter-routing-key", QueueBindings.GLOBAL_DLQ_KEY)
+                .withArgument("x-dead-letter-exchange", QueueBindings.USER_DLX)
+                .withArgument("x-dead-letter-routing-key", QueueBindings.USER_DLQ_KEY)
                 .build();
     }
 
+    // 4. DLQ 생성 - 실패한 메시지들 오는 큐
     @Bean
-    public Queue globalDeadLetterQueue() {
-        log.info("DLQ 생성 중");
-        return new Queue(QueueBindings.GLOBAL_DLQ, true);
+    public Queue userDeadLetterQueue() {
+        return new Queue(QueueBindings.USER_DLQ, true);
+    }
+
+    @Bean
+    public Queue paymentDeadLetterQueue() {
+        return new Queue(QueueBindings.PAYMENT_DLQ, true);
     }
 
     // 4. 바인딩 설정 (교환기와 큐를 연결)
     @Bean
     public Binding emailDelayQueueBinding(Queue emailDelayQueue, CustomExchange delayedExchange) {
-        log.info("emailDelayQueue 를 delayedExchange 에 라우팅 키 ‘emailDelayKey’로 바인딩");
         return BindingBuilder
                 .bind(emailDelayQueue)
                 .to(delayedExchange)
@@ -136,7 +141,6 @@ public class RabbitConfig {
 
     @Bean
     public Binding userSignupQueueBinding(Queue userSignupQueue, CustomExchange userSignupExchange) {
-        log.info("userSignupQueue 를 userSignupExchange 에 라우팅 키 ‘userSignupKey’로 바인딩");
         return BindingBuilder
                 .bind(userSignupQueue)
                 .to(userSignupExchange)
@@ -145,12 +149,20 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding globalDLQBinding(Queue globalDeadLetterQueue, CustomExchange deadLetterExchange) {
-        log.info("globalDeadLetterQueue 를 deadLetterExchange 에 라우팅 키 ‘globalDLQKey’로 바인딩");
+    public Binding userDLQBinding(Queue userDeadLetterQueue, CustomExchange userDeadLetterExchange) {
         return BindingBuilder
-                .bind(globalDeadLetterQueue)
-                .to(deadLetterExchange)
-                .with(QueueBindings.GLOBAL_DLQ_KEY)
+                .bind(userDeadLetterQueue)
+                .to(userDeadLetterExchange)
+                .with(QueueBindings.USER_DLQ_KEY)
+                .noargs();
+    }
+
+    @Bean
+    public Binding paymentDLQBinding(Queue paymentDeadLetterQueue, CustomExchange paymentDeadLetterExchange) {
+        return BindingBuilder
+                .bind(paymentDeadLetterQueue)
+                .to(paymentDeadLetterExchange)
+                .with(QueueBindings.PAYMENT_DLQ_KEY)
                 .noargs();
     }
 }

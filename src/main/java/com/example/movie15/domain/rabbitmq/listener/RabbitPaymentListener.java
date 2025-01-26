@@ -44,7 +44,7 @@ public class RabbitPaymentListener {
 
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
-            log.warn("예약성공메시지 오류 : 예약아이디 : {}", bookingId);
+            log.warn("예약성공메시지 오류. DLQ 로 발송 : BOOKING 아이디 : {}", bookingId);
 
             channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);  // 재큐하지 않고 DLQ로 이동
         }
@@ -80,7 +80,7 @@ public class RabbitPaymentListener {
 
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
-            log.warn("예약취소메시지오류 : 예약아이디 : {}", bookingId);
+            log.warn("예약취소메시지오류. DLQ 로 발송. BOOKING 아이디 : {}", bookingId);
 
             channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);  // 재큐하지 않고 DLQ로 이동
         }
@@ -116,7 +116,7 @@ public class RabbitPaymentListener {
 
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
-            log.warn("예약지연메시지오류 : 예약아이디 : {}", bookingId);
+            log.warn("예약지연메시지오류. DLQ 로 발송. BOOKING 아이디 : {}", bookingId);
 
             channel.basicNack(message.getMessageProperties().getDeliveryTag(),false, false);  // 재큐하지 않고 DLQ로 이동
         }
