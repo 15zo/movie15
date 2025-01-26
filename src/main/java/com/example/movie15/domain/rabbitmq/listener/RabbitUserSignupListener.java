@@ -32,14 +32,9 @@ public class RabbitUserSignupListener {
                 channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
             }
         } catch (Exception e) {
-            log.warn("유저를 찾을 수 없습니다. userId: {}", userId);
+            log.warn("미인증 유저를 찾을 수 없습니다. DLQ 로 발송. USER 아이디 : {}", userId);
             channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);  // 재큐하지 않고 DLQ 로 이동
         }
     }
 
-    @RabbitListener(queues = QueueBindings.GLOBAL_DLQ, ackMode = "MANUAL")
-    public void processDeadLetterQueue(Long userId, Channel channel, Message message) throws IOException {
-        log.warn("RabbitMQ : 처리 실패한 메시지 발견 : {}", userId);
-        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-    }
 }
