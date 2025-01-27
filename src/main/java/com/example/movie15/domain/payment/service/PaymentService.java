@@ -3,7 +3,6 @@ package com.example.movie15.domain.payment.service;
 import java.math.BigDecimal;
 
 import com.example.movie15.domain.rabbitmq.producer.RabbitPaymentProducer;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,8 +81,6 @@ public class PaymentService {
 
 		// rabbitmq 취소 메소드 호출
 		rabbitPaymentProducer.sendCancelEvent(booking.getId());
-
-		return tossPaymentCancel(paymentKey, cancelReason);
 	}
 
 	private Booking getBooking(Long bookingId) {
