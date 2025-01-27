@@ -34,8 +34,8 @@ public class RedisConfig {
     public RedissonClient redissonClient() {
         Config config = new Config();
         config.useSingleServer()
-            .setAddress(REDISSON_PREFIX + host + ":" + port)
-            .setPassword(password);
+            .setAddress(REDISSON_PREFIX + host + ":" + port);
+            //.setPassword(password);
         return Redisson.create(config);
     }
 }
