@@ -17,6 +17,7 @@ import com.example.movie15.domain.runtime.entity.Seat;
 import com.example.movie15.domain.runtime.repository.RunTimeRepository;
 import com.example.movie15.domain.runtime.repository.SeatRepository;
 import com.example.movie15.domain.user.entity.User;
+import com.example.movie15.global.aop.redis.DistributedLock;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +34,7 @@ public class BookingService {
 
 	// 영화 예매 예약
 	@Transactional
+	@DistributedLock(key = "#requestDto.runtimeId")
 	public BookingResponseDto createBooking(User user, BookingRequestDto requestDto) {
 		// 상영 정보 찾기 찾기
 		RunTime findRunTime = getRunTime(requestDto.getRuntimeId());
