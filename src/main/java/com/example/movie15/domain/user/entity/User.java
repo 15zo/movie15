@@ -5,8 +5,7 @@ import com.example.movie15.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.joda.time.LocalDateTime;
-
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,8 +78,8 @@ public class User extends BaseEntity {
     }
 
     // 인증토큰 만료시간 생성 (회원가입요청시간 + 10분)
-    public void setTokenExpiryTime() {
-        this.tokenExpiryTime = LocalDateTime.now().plusMinutes(10);
+    public void setTokenExpiryTime(long minutes) {
+        this.tokenExpiryTime = LocalDateTime.now().plusMinutes(minutes);
     }
 
     /**

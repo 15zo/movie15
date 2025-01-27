@@ -1,6 +1,7 @@
 package com.example.movie15.domain.user.service;
 
 import com.example.movie15.domain.email.service.SignupEmailSenderService;
+import com.example.movie15.domain.rabbitmq.producer.RabbitUserSignupProducer;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
 import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
@@ -16,7 +17,6 @@ import com.example.movie15.global.security.JwtProvider;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,14 +24,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
+    private final RabbitUserSignupProducer rabbitUserSignupProducer;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -54,9 +52,11 @@ public class UserService {
         // <<이메일 보내기>> 이메일 인증 토큰 생성 및 설정.
         String token = emailSenderService.sendVerificationEmail(user.getEmail()); // 이메일 전송 후 토큰반환받음.
         user.setVerificationToken(token); // 발급된 토큰 user 에 설정
-        user.setTokenExpiryTime(); // 토큰 유효시간: 10분
+        user.setTokenExpiryTime(10); // 토큰 유효시간: 10분
 
         userRepository.save(user);
+
+        rabbitUserSignupProducer.userSignupEvent(user.getId(), user.getTokenExpiryTime()); // rabbitmq
     }
 
     @Transactional
@@ -85,6 +85,11 @@ public class UserService {
         // 비밀번호 검증 및 삭제된 사용자 검증(보안을 위해 로직을 통합했음)
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword()) || user.isDeleted()) {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
+        }
+
+        // 회원가입 이메일 인증을 하지 않았을때
+        if (!user.isVerified()) {
+            throw new ForbiddenException(ExceptionType.EMAIL_NOT_VERIFIED);
         }
 
         // 사용자 인증 후 인증 객체를 저장
