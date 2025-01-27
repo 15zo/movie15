@@ -30,6 +30,12 @@ spring:
         format_sql: true
         enable_lazy_load_no_trans: true
 
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: 1234
+
 jwt:
   secret: ${JWT_SECRET_KEY}
   expiry-millis: 1800000  # 30분
@@ -54,6 +60,8 @@ payment:
     successUrl: "http://localhost:8080/api/v1/payments/toss/success"
     failUrl: "http://localhost:8080/api/v1/payments/toss/fail"
     url: "https://api.tosspayments.com/v1/payments/"
+
+
 
   # Mail
   mail:
