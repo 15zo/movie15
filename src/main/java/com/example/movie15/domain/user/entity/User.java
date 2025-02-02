@@ -41,6 +41,11 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviewList = new ArrayList<>();
 
+    // 관리자 권한 확인 메소드
+    public boolean hasAdminRole() {
+        return this.role == Role.ADMIN;
+    }
+
     // 회원가입용 생성자
     public User(String email, String password, String name) {
         this.email = email;

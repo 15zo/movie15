@@ -12,14 +12,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+    Optional<User> findByEmailAndIsDeletedFalse(String email);
+
+    Optional<User> findByIdAndIsDeletedFalse(Long id);
+
     Optional<User> findByEmail(String email);
 
     default User findByIdOrElseThrow(Long userId) {
         return findById(userId).orElseThrow(() -> new IllegalArgumentException("해당 ID에 맞는 데이터가 존재하지 않습니다."));
     }
-
-    List<User> findAllByEmailIn(List<String> emails);
-
 
     // 인증 토큰으로 사용자 검색
     User findByVerificationToken(String token);

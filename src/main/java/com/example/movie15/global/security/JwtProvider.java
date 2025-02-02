@@ -48,7 +48,7 @@ public class JwtProvider {
     }
 
     // 토큰 생성
-    public String generateToken(Long userId,long expiryMillis) {
+    public String generateToken(Long userId, long expiryMillis) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expiryMillis);
 
@@ -80,7 +80,9 @@ public class JwtProvider {
     // 토큰 검증
     public boolean validateToken(String token) {
         try {
+            log.info("토큰 검증 시작: {}", token);
             if (isBlacklisted(token)) {
+                log.warn("블랙리스트에 등록된 토큰: {}", token);
                 throw new WrongAccessException(ExceptionType.BLACKLISTED_TOKEN);
             }
 
@@ -90,11 +92,12 @@ public class JwtProvider {
                     .parseClaimsJws(token)
                     .getBody();
 
-            // 만료된 토큰인지 확인
             if (claims.getExpiration().before(new Date())) {
+                log.warn("만료된 토큰: {}", token);
                 throw new WrongAccessException(ExceptionType.EXPIRED_TOKEN);
             }
 
+            log.info("토큰 검증 성공: {}", token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("유효하지 않은 토큰: {}", e.getMessage());
@@ -152,12 +155,12 @@ public class JwtProvider {
 
     // Redis 키 삭제
     public void deleteKey(String key) {
-       Boolean deleted = redisTemplate.delete(key);
-       if (Boolean.TRUE.equals(deleted)) {
-           log.info("Redis 키 삭제 완료: {}", key);
-       } else {
-           log.warn("Redis 키 삭제 실패 또는 키가 존재하지 않습니다: {}", key);
-       }
+        Boolean deleted = redisTemplate.delete(key);
+        if (Boolean.TRUE.equals(deleted)) {
+            log.info("Redis 키 삭제 완료: {}", key);
+        } else {
+            log.warn("Redis 키 삭제 실패 또는 키가 존재하지 않습니다: {}", key);
+        }
     }
 
     // 토큰 블랙리스트 처리
@@ -171,7 +174,15 @@ public class JwtProvider {
     // 블랙리스트 확인
     public boolean isBlacklisted(String token) {
         String redisKey = "blacklist:" + token;
-        return redisTemplate.hasKey(redisKey);
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.MILLISECONDS);
+
+        if (ttl == null || ttl <= 0) {
+            log.info("블랙리스트 키가 없거나 만료됐습니다: {}", redisKey);
+            return false;
+        }
+
+        log.info("블랙리스트 키 존재: {} (TTL: {}ms)", redisKey, ttl);
+        return true;
     }
 
     // 토큰 남은 만료 시간 계산(액세스 토큰 만료 시간)
@@ -181,6 +192,12 @@ public class JwtProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getExpiration().getTime() - System.currentTimeMillis();
+
+        long remainingTime = claims.getExpiration().getTime() - System.currentTimeMillis();
+        if (remainingTime <= 0) {
+            log.warn("토큰 만료 시간이 0 이하입니다: {}", token);
+            throw new IllegalArgumentException("토큰이 이미 완료됐습니다.");
+        }
+        return remainingTime;
     }
 }

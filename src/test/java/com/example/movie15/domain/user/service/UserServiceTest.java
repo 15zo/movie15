@@ -87,24 +87,33 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("올바른 비밀번호 입력 시 임시 JWT 토큰 반환")
-    void testCheckPassword_WithCorrectPassword_ShouldReturnTempToken() {
+    @DisplayName("올바른 비밀번호 입력 시 true 반환")
+    void testCheckPassword_WithCorrectPassword_ShouldReturnTrue() {
         // Given: 비밀번호 확인을 위한 mock 사용자 설정
         User mockUser = new User("test@example.com", "encoded-password", "김명호");
         when(userRepository.findByIdOrElseThrow(1L)).thenReturn(mockUser);
         when(passwordEncoder.matches("correct-password", mockUser.getPassword())).thenReturn(true);
 
-        Authentication authentication = mock(Authentication.class);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        when(jwtProvider.tempToken(authentication)).thenReturn("temp-jwt-token");
-
         // When: 비밀번호 확인 메서드 호출
-        JwtAuthResponse response = userService.checkPassword(1L, "correct-password");
+        Boolean isPasswordCorrect = userService.checkPassword(1L, "correct-password");
 
-        // Then: 임시 JWT 토큰이 반환되었는지 검증
-        assertNotNull(response);
-        assertEquals("Bearer", response.getTokenAuthScheme());
-        assertEquals("temp-jwt-token", response.getAccessToken());
+        // Then: true가 반환되었는지 검증
+        assertNotNull(isPasswordCorrect);
+    }
+
+    @Test
+    @DisplayName("잘못된 비밀번호 입력 시 false 반환")
+    void testCheckPassword_WithIncorrectPassword_ShouldReturnFalse() {
+        // Given: 비밀번호 확인을 위한 mock 사용자 설정
+        User mockUser = new User("test@example.com", "encoded-password", "김명호");
+        when(userRepository.findByIdOrElseThrow(1L)).thenReturn(mockUser);
+        when(passwordEncoder.matches("wrong-password", mockUser.getPassword())).thenReturn(false);
+
+        // When: 비밀번호 확인 메소드 호출
+        Boolean isPasswordCorrect = userService.checkPassword(1L, "wrong-password");
+
+        // Then: false가 반환되었는지 검증
+        assertFalse(isPasswordCorrect);
     }
 
     @Test

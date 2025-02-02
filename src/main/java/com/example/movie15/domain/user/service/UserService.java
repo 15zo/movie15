@@ -3,7 +3,7 @@ package com.example.movie15.domain.user.service;
 import com.example.movie15.domain.email.service.SignupEmailSenderService;
 import com.example.movie15.domain.user.dto.JwtAuthResponse;
 import com.example.movie15.domain.user.dto.LoginRequestDto;
-import com.example.movie15.domain.user.dto.UpdateUserRequestDto;
+import com.example.movie15.domain.user.dto.UpdatePasswordRequestDto;
 import com.example.movie15.domain.user.dto.UserRequestDto;
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
@@ -14,15 +14,9 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -33,7 +27,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final SignupEmailSenderService emailSenderService;
 
@@ -42,7 +35,7 @@ public class UserService {
         Optional<User> existingUser = userRepository.findByEmail(userRequestDto.getEmail());
 
         if (existingUser.isPresent()) {
-            if(existingUser.get().isDeleted()) {
+            if (existingUser.get().isDeleted()) {
                 throw new BadValueException(ExceptionType.DELETED_EMAIL_REUSE);
             }
             throw new BadValueException(ExceptionType.EXIST_USER);
@@ -64,24 +57,28 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUserInfo(Long userId, UpdateUserRequestDto updateUserRequestDto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
-
-        if (updateUserRequestDto.getNewPassword() != null) {
-            validatePasswordChange(user, updateUserRequestDto);
-            user.updatePassword(passwordEncoder.encode(updateUserRequestDto.getNewPassword()));
+    public void updatePassword(Long authenticatedUserId, Long userId, UpdatePasswordRequestDto updatePasswordRequestDto) {
+        if (!authenticatedUserId.equals(userId)) {
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
 
-        userRepository.save(user);
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+
+        validatePasswordChange(user, updatePasswordRequestDto);
+        user.updatePassword(passwordEncoder.encode(updatePasswordRequestDto.getNewPassword()));
     }
 
     public JwtAuthResponse login(LoginRequestDto loginRequestDto) {
-        User user = userRepository.findByEmail(loginRequestDto.getEmail())
+        User user = userRepository.findByEmailAndIsDeletedFalse(loginRequestDto.getEmail())
                 .orElseThrow(() -> new WrongAccessException(ExceptionType.WRONG_EMAIL));
 
-        if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword()) || user.isDeleted()) {
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
+        }
+
+        if (user.isDeleted()) {
+            throw new WrongAccessException(ExceptionType.WRONG_EMAIL);
         }
 
         // 액세스 토큰 생성
@@ -94,25 +91,42 @@ public class UserService {
         return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken, refreshToken);
     }
 
-    // 회원 탈퇴 시 비밀번호 확인
-    public void checkPassword(Long userId, String password) {
-        User user = userRepository.findByIdOrElseThrow(userId);
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new WrongAccessException(ExceptionType.WRONG_PASSWORD);
-        }
-    }
-
-    @Transactional
-    public void deleteUser(Long userId, String password) {
+    public boolean checkPassword(Long userId, String password) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
+        if (user.isDeleted()) {
+            throw new BadValueException(ExceptionType.ALREADY_DELETED_USER);
+        }
+
+        return passwordEncoder.matches(password, user.getPassword());
+    }
+
+    @Transactional
+    public void deleteUser(Long authenticatedUserId, Long userId, String password) {
+        log.info("인증된 사용자 ID: {}", authenticatedUserId);
+        log.info("요청된 탈퇴 대상 사용자 ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+
+        if (!authenticatedUserId.equals(userId)) {
+            log.info("인증된 사용자와 요청된 사용자 ID 불일치: {} != {}", authenticatedUserId, userId);
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        }
+
+        if (user.isDeleted()) {
+            log.info("이미 탈퇴된 사용자입니다: {}", userId);
+            throw new BadValueException(ExceptionType.ALREADY_DELETED_USER);
+        }
+
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            log.info("비밀번호 불일치. 입력된 비밀번호: {}", password);
             throw new ForbiddenException(ExceptionType.WRONG_PASSWORD);
         }
 
-        userRepository.delete(user);
+        log.info("회원 탈퇴 성공: {}", userId);
+        user.updateIsDeleted();
     }
 
     @Transactional
@@ -129,24 +143,30 @@ public class UserService {
         log.info("로그아웃된 토큰이 블랙리스트에 등록됐습니다: {}", token);
     }
 
-    public JwtAuthResponse refreshToken(String refreshToken) {
+    public JwtAuthResponse refreshToken(Long authenticatedUserId, String refreshToken) {
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
         }
 
         Long userId = jwtProvider.getUserId(refreshToken);
+
+        if (!authenticatedUserId.equals(userId)) {
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        }
+
         if (!jwtProvider.validateStoredRefreshToken(userId, refreshToken)) {
             throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
         }
 
         String newAccessToken = jwtProvider.generateAccessToken(userId);
         String newRefreshToken = jwtProvider.generateRefreshToken(userId);
+
         jwtProvider.storeRefreshToken(userId, newRefreshToken);
 
         return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), newAccessToken, newRefreshToken);
     }
 
-    private void validatePasswordChange(User user, UpdateUserRequestDto dto) {
+    private void validatePasswordChange(User user, UpdatePasswordRequestDto dto) {
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
             throw new WrongAccessException(ExceptionType.INVALID_CURRENT_PASSWORD);
         }

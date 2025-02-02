@@ -2,6 +2,8 @@ package com.example.movie15.global.security.service;
 
 import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
+import com.example.movie15.global.exception.BadValueException;
+import com.example.movie15.global.exception.ExceptionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,14 +18,20 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    // 이메일로 사용자 정보를 검색하고 반환
+    // userId로 사용자 정보를 검색하고 반환
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> user = userRepository.findByEmail(username);
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        try {
+            Long id = Long.valueOf(userId);
 
-        if (user.isEmpty()) {
-            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다.");
+            Optional<User> user = userRepository.findById(id);
+
+            if (user.isEmpty()) {
+                throw new BadValueException(ExceptionType.USER_NOT_FOUND);
+            }
+            return new UserDetailsImpl(user.get());
+        } catch (NumberFormatException e) {
+            throw new BadValueException(ExceptionType.USER_NOT_FOUND);
         }
-        return new UserDetailsImpl(user.get());
     }
 }

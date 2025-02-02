@@ -53,6 +53,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterchain.doFilter(request, response);
             return;
         }
+
+        try {
+            // 화이트 리스트에 해당하지 않는 요청에 대한 인증 처리
+            authenticate(request);
+            filterchain.doFilter(request, response);
+        } catch (BadValueException e) {
+            // 인증 실패 처리
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+        }
     }
 
     // 요청 경로가 화이트리스트인지 확인
@@ -72,13 +83,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // 블랙리스트 확인
         if (jwtProvider.isBlacklisted(token)) {
             log.warn("블랙리스트에 등록된 토큰입니다: {}", token);
-            throw new BadValueException(ExceptionType.INVALID_TOKEN);
+            throw new BadValueException(ExceptionType.BLACKLISTED_TOKEN);
         }
 
-        // 토큰 유효성 검사
-        if (!StringUtils.hasText(token) || !jwtProvider.validateToken(token)) {
+        // 토큰 검증
+        if (!jwtProvider.validateToken(token)) {
             log.warn("유효하지 않은 토큰입니다.");
-            return;
+            throw new BadValueException(ExceptionType.INVALID_TOKEN);
         }
 
         // 사용자 인증 처리
@@ -95,11 +106,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix)) {
             String token = bearerToken.substring(headerPrefix.length()).trim();
-            log.debug("Extracted JWT token: {}", token.substring(0, 10) + "..."); // 일부만 로깅
+            log.debug("추출된 JWT 토큰: {}", token.substring(0, 10) + "..."); // 일부만 로깅
             return token;
         }
 
-        log.warn("Invalid Authorization header: {}", bearerToken);
+        log.warn("유효하지 않은 Authorization header: {}", bearerToken);
         throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
     }
 
