@@ -37,13 +37,11 @@ public class PaymentViewController {
 	@GetMapping("/success")
 	public String successPage() {
 
-
-
 		return "/payment/success";
 	}
 
 	@GetMapping("/fail")
-	public String failPage(@RequestParam String orderId, HttpServletRequest request, Model model) {
+	public String failPage(@RequestParam Long orderId, HttpServletRequest request, Model model) {
 
 		paymentService.tossPaymentFail(orderId);
 

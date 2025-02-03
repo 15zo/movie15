@@ -12,6 +12,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Getter
 @Entity
@@ -35,6 +38,9 @@ public class Inquiry extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<InquiryFile> inquiryFiles = new ArrayList<>();
+
     public Inquiry(String subject, String content, User user) {
         this.subject = subject;
         this.content = content;
@@ -52,5 +58,9 @@ public class Inquiry extends BaseEntity {
 
     public boolean isAnswered() {
         return this.status == InquiryStatus.ANSWERED;
+    }
+
+    public List<InquiryFile> getInquiryFiles() {
+        return inquiryFiles;
     }
 }

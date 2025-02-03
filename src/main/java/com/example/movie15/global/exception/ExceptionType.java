@@ -6,6 +6,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Getter
 public enum ExceptionType {
+    EMAIL_NOT_VERIFIED(HttpStatus.UNAUTHORIZED, "이메일 인증이 완료되지 않았습니다. 이메일을 인증해주세요."),
     SAME_REVIEW(HttpStatus.NOT_FOUND,  "이미 작성된 리뷰와 같습니다. 수정을 원하면 다시 입력해주세요."),
     ALREADY_REVIEW(HttpStatus.NOT_FOUND,  "이미 해당영화에 리뷰를 작성했습니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND,  "리뷰 정보를 찾을 수 없습니다."),
@@ -41,7 +42,9 @@ public enum ExceptionType {
     CINEMA_HALL_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지않는 상영관입니다." ),
     RUN_TIME_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지않는 영화상영시간대입니다." ),
     RUN_TIME_DATE_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "상영 시간 등록은 현재일로부터 7일 이내로만 가능합니다."),
-    ;
+    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST,"지원하지않는 파일확장자입니다." ),
+    TOSS_PAYMENT_CONFIRM_FAIL(HttpStatus.BAD_REQUEST, "결제 승인 요청이 실패하였습니다."),
+    TOSS_PAYMENT_CANCEL_FAIL(HttpStatus.BAD_REQUEST, "결제 취소 요청이 실패하였습니다.");
 
 
     private final HttpStatus status;

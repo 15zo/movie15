@@ -1,10 +1,11 @@
 package com.example.movie15.domain.booking.repository;
 
-import java.util.List;
 import java.util.Optional;
 
 import com.example.movie15.domain.booking.entity.Booking;
 
+import com.example.movie15.global.exception.ExceptionType;
+import com.example.movie15.global.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +30,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 		+ "JOIN FETCH bs.seat s "
 		+ "WHERE b.id = :bookingId AND b.user.id = :userId")
 	Booking findBookingByIdAndUserId(@Param("bookingId") Long bookingId, @Param("userId") Long userId);
+
+	// RabbitMQ 에서 사용
+	@Query("SELECT b FROM Booking b JOIN FETCH b.user WHERE b.id = :bookingId")
+	Optional<Booking> findByIdWithUser(@Param("bookingId") Long bookingId);
+
+	// RabbitMQ 에서 사용
+	default Booking findBookingWithUser(Long bookingId) {
+		return findByIdWithUser(bookingId).orElseThrow(() -> new NotFoundException(ExceptionType.BOOKING_NOT_FOUND));
+	}
 }

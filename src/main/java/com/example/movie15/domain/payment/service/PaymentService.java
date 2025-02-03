@@ -1,19 +1,11 @@
 package com.example.movie15.domain.payment.service;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Map;
 
-import org.json.simple.JSONObject;
+import com.example.movie15.domain.rabbitmq.producer.RabbitPaymentProducer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import com.example.movie15.domain.booking.entity.Booking;
 import com.example.movie15.domain.booking.enums.BookingStatus;
@@ -32,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class PaymentService {
 
+	private final RabbitPaymentProducer rabbitPaymentProducer;
 	private final PaymentRepository paymentRepository;
 	private final BookingRepository bookingRepository;
 
@@ -43,7 +36,7 @@ public class PaymentService {
 
 	// 결제 성공
 	@Transactional
-	public void tossPaymentSuccess(String paymentKey, String bookingId, Long amount) {
+	public void paymentSuccessLogic(String paymentKey, Long bookingId, Long amount) {
 
 		// 예약 정보를 찾아오기
 		Booking booking = getBooking(bookingId);
@@ -54,11 +47,15 @@ public class PaymentService {
 
 		// 예약 정보 결제 정보 저장
 		booking.updateBookingStatus(BookingStatus.COMPLETED, payment);
+
+		// rabbitmq 호출
+		rabbitPaymentProducer.sendChargeEvent(booking.getId()); // 결제성공 이메일 발송
+		rabbitPaymentProducer.movieStartReminderEmail(booking.getId()); // 영화시작 30분전 이메일발송 예약
 	}
 
 	// 결제 실패
 	@Transactional
-	public void tossPaymentFail(String bookingId) {
+	public void tossPaymentFail(Long bookingId) {
 		// 예약 정보를 찾아오기
 		Booking booking = getBooking(bookingId);
 
@@ -71,7 +68,7 @@ public class PaymentService {
 
 	// 결제 취소
 	@Transactional
-	public Map tossPaymentCancel(Long bookingId, String paymentKey, String cancelReason) {
+	public void paymentCancelLogic(Long bookingId, String paymentKey, String cancelReason) {
 		// 예약 정보를 찾아오기
 		Booking booking = bookingRepository.findBookingWithPayment(bookingId);
 
@@ -82,36 +79,14 @@ public class PaymentService {
 		// 예약 정보 결제 정보 저장
 		booking.updateBookingStatus(BookingStatus.CANCELED, payment);
 
-		return tossPaymentCancel(paymentKey, cancelReason);
+		// rabbitmq 취소 메소드 호출
+		rabbitPaymentProducer.sendCancelEvent(booking.getId());
 	}
 
-
-
-	private Booking getBooking(String bookingId) {
-		return bookingRepository.findById(Long.valueOf(bookingId))
+	private Booking getBooking(Long bookingId) {
+		return bookingRepository.findById(bookingId)
 			.orElseThrow(() -> new NotFoundException(ExceptionType.BOOKING_NOT_FOUND));
 	}
 
 
-	// 토스 결제를 위한 헤더 설정
-	private HttpHeaders getHeaders() {
-		HttpHeaders headers = new HttpHeaders();
-		String encodedAuthKey = new String(
-			Base64.getEncoder().encode((secretKey + ":").getBytes(StandardCharsets.UTF_8)));
-		headers.setBasicAuth(encodedAuthKey);
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-		return headers;
-	}
-
-
-	public Map tossPaymentCancel(String paymentKey, String cancelReason) {
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = getHeaders();
-		JSONObject params = new JSONObject();
-		params.put("cancelReason", cancelReason);
-
-		return restTemplate.postForObject(tossUrl + paymentKey + "/cancel",
-			new HttpEntity<>(params, headers), Map.class);
-	}
 }

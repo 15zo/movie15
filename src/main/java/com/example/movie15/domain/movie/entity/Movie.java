@@ -1,6 +1,8 @@
 package com.example.movie15.domain.movie.entity;
 
 import com.example.movie15.domain.review.entity.Review;
+
+import java.time.LocalDate;
 import java.util.List;
 
 import com.example.movie15.domain.runtime.entity.RunTime;
@@ -10,11 +12,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
-import java.util.List;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(name = "movie")
+@SQLDelete(sql = "UPDATE movie SET is_deleted = true WHERE id = ?")
+@Where(clause = "is_deleted = false")
 public class Movie extends BaseEntity {
 
     @Id
@@ -42,6 +50,12 @@ public class Movie extends BaseEntity {
     @Column
     private Integer duration; // 상영 시간 (분)
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+    private Boolean isDeleted = false;
+
+    @Column(name = "removed_at")
+    private LocalDate removedAt; // 영화가 Top 40에서 제거된 시점
+
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviewList = new ArrayList<>();
 
@@ -65,4 +79,26 @@ public class Movie extends BaseEntity {
     public int getRuntimeMinutes() {
         return duration;
     }
+
+    public void markAsRemoved() {
+        this.removedAt = LocalDate.now();
+    }
+
+    public void restore() {
+        this.isDeleted = false;
+        this.removedAt = null;
+    }
+
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public void setDuration(int i) {
+        this.duration = i;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
 }
+

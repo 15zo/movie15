@@ -98,16 +98,16 @@ public class GlobalExceptionHandler {
 
     }
 
-//    @ExceptionHandler(JwtException.class)
-//    protected ResponseEntity<CommonResponseBody<Void>> handleJwtException(JwtException e) {
-//        HttpStatus httpStatus = e instanceof ExpiredJwtException
-//                ? HttpStatus.UNAUTHORIZED
-//                : HttpStatus.FORBIDDEN;
-//
-//                return ResponseEntity
-//                        .status(httpStatus)
-//                        .body(new CommonResponseBody<>(e.getMessage()));
-//    }
+    //    @ExceptionHandler(JwtException.class)
+    //    protected ResponseEntity<CommonResponseBody<Void>> handleJwtException(JwtException e) {
+    //        HttpStatus httpStatus = e instanceof ExpiredJwtException
+    //                ? HttpStatus.UNAUTHORIZED
+    //                : HttpStatus.FORBIDDEN;
+    //
+    //                return ResponseEntity
+    //                        .status(httpStatus)
+    //                        .body(new CommonResponseBody<>(e.getMessage()));
+    //    }
 
     @ExceptionHandler(ResponseStatusException.class)
     protected ResponseEntity<CommonResponseBody<Void>> handleResponseStatusException(ResponseStatusException e) {
@@ -117,4 +117,27 @@ public class GlobalExceptionHandler {
                 .body(new CommonResponseBody<>(e.getMessage()));
     }
 
+    @ExceptionHandler(TossPaymentException.class)
+    protected ResponseEntity<CommonResponseBody<Void>> tossPaymentException(TossPaymentException e) {
+
+        ExceptionType exceptionType = e.getExceptionType();
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put(exceptionType.name(), exceptionType.getMessage());
+
+        if (exceptionType.equals(ExceptionType.TOSS_PAYMENT_CONFIRM_FAIL)) {
+            errors.put("paymentKey", e.getPaymentKey());
+            errors.put("orderId", e.getOrderId().toString());
+            errors.put("amount", e.getAmount().toString());
+        } else if (exceptionType.equals(ExceptionType.TOSS_PAYMENT_CANCEL_FAIL)) {
+            errors.put("paymentKey", e.getPaymentKey());
+            errors.put("cancelReason", e.getCancelReason());
+        }
+
+        CommonResponseBody<Map<String, String>> responseBody = new CommonResponseBody<>(e.getMessage(), errors);
+
+        return ResponseEntity
+            .status(exceptionType.getStatus())
+            .body(new CommonResponseBody<>(e.getMessage()));
+    }
 }
