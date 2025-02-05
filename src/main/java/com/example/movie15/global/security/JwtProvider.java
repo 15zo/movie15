@@ -116,21 +116,6 @@ public class JwtProvider {
                 .getSubject());
     }
 
-    // 토큰을 통해 Admin 권한이 있는지 검증
-    public boolean hasAdminRole(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
-        }
-        return true;
-    }
-
     // 리프레시 토큰 저장(Redis)
     public void storeRefreshToken(Long userId, String refreshToken) {
         String rediskey = "refreshToken:" + userId;
