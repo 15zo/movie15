@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +22,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.web.client.RestTemplate;
 
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 @EnableWebSecurity
 @Configuration
@@ -30,8 +33,7 @@ public class WebConfig {
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
 
-    private static final String[] WHITE_LIST = {"/api/users/signup", "/api/users/login", "/api/users/refresh", "/api/error", "/api/verify", "/api/movies/**", "/api/cinemas/**", "/api/payment/**", "/api/booking/**", "api/runtimes", "api/runtimes/**"};
-    private static final String[] WHITE_LIST = {"/api/users/signup", "/api/users/login", "/api/users/refresh", "/api/error", "/api/verify", "/api/movies/**","/api/cinemas/**", "/api/payment/**", "/api/booking/**", "api/runtimes","api/runtimes/**","api/inquiries","api/inquiries/**"};
+    private static final String[] WHITE_LIST = {"/api/users/signup", "/api/users/login", "/api/users/refresh", "/api/error", "/api/verify", "/api/movies/**","/api/cinemas/**", "/api/payment/**", "/api/booking/**", "api/runtimes","api/runtimes/**"};
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
@@ -48,9 +50,7 @@ public class WebConfig {
                         auth.requestMatchers(WHITE_LIST).permitAll()
                                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.INCLUDE,
-                                        DispatcherType.ERROR).permitAll()
-                                .requestMatchers("/admins/**").hasRole("ADMIN")
-                                .anyRequest().authenticated()
+                                        DispatcherType.ERROR).permitAll().anyRequest().authenticated()
                 )
                 // Spring Security 예외에 대한 처리를 핸들러에 위임
                 .exceptionHandling(handler -> handler

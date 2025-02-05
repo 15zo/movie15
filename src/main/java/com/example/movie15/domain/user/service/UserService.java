@@ -15,10 +15,6 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,11 +90,13 @@ public class UserService {
             throw new WrongAccessException(ExceptionType.WRONG_EMAIL);
         }
 
+        String role = user.getRole().name();
+
         // 액세스 토큰 생성
-        String accessToken = jwtProvider.generateAccessToken(user.getId());
+        String accessToken = jwtProvider.generateAccessToken(user.getId(), role);
 
         // 리프레시 토큰 생성  및 Redis 저장
-        String refreshToken = jwtProvider.generateRefreshToken(user.getId());
+        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), role);
         jwtProvider.storeRefreshToken(user.getId(), refreshToken);
 
         return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken, refreshToken);
@@ -171,8 +169,13 @@ public class UserService {
             throw new BadValueException(ExceptionType.INVALID_REFRESH_TOKEN);
         }
 
-        String newAccessToken = jwtProvider.generateAccessToken(userId);
-        String newRefreshToken = jwtProvider.generateRefreshToken(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+
+        String role = user.getRole().name();
+
+        String newAccessToken = jwtProvider.generateAccessToken(userId, role);
+        String newRefreshToken = jwtProvider.generateRefreshToken(userId, role);
 
         jwtProvider.storeRefreshToken(userId, newRefreshToken);
 

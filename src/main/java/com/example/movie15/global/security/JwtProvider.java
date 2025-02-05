@@ -48,24 +48,25 @@ public class JwtProvider {
     }
 
     // 토큰 생성
-    public String generateToken(Long userId, long expiryMillis) {
+    public String generateToken(Long userId, String role, long expiryMillis) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expiryMillis);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
+                .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expireDate)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateAccessToken(Long userId) {
-        return generateToken(userId, accessExpiryMillis);
+    public String generateAccessToken(Long userId, String role) {
+        return generateToken(userId, role, accessExpiryMillis);
     }
 
-    public String generateRefreshToken(Long userId) {
-        return generateToken(userId, refreshExpiryMillis);
+    public String generateRefreshToken(Long userId, String role) {
+        return generateToken(userId, role, refreshExpiryMillis);
     }
 
     // Authorization 헤더에서 토큰 추출

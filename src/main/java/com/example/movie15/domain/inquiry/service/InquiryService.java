@@ -1,9 +1,5 @@
 package com.example.movie15.domain.inquiry.service;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.example.movie15.domain.inquiry.dto.InquiryRequestDto;
 import com.example.movie15.domain.inquiry.dto.InquiryResponseDto;
 import com.example.movie15.domain.inquiry.entity.Inquiry;
@@ -19,8 +15,8 @@ import com.example.movie15.global.model.FileExtension;
 import com.example.movie15.global.model.FileType;
 import com.example.movie15.global.repository.FileRepository;
 import com.example.movie15.global.security.JwtProvider;
+import com.example.movie15.global.security.service.UserDetailsImpl;
 import com.example.movie15.global.service.FileUploaderService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,25 +24,28 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
     private final UserRepository userRepository;
-    private final JwtProvider jwtProvider;
     private final FileUploaderService fileUploaderService;
     private final FileRepository fileRepository;
     private final InquiryFileRepository inquiryFileRepository;
 
     /**
-     *  문의 사항 생성 (첨부파일 포함)
+     * 문의 사항 생성 (첨부파일 포함)
      */
     @Transactional
     public InquiryResponseDto createInquiry(InquiryRequestDto dto, List<MultipartFile> files, Long userId) throws IOException {
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
         Inquiry inquiry = new Inquiry(dto.getSubject(), dto.getContent(), user);
         inquiryRepository.save(inquiry);
@@ -63,7 +62,7 @@ public class InquiryService {
     }
 
     /**
-     *  파일 업로드 후 InquiryFile 객체 생성
+     * 파일 업로드 후 InquiryFile 객체 생성
      */
     private InquiryFile uploadFile(MultipartFile file, Inquiry inquiry) {
         try {
@@ -87,11 +86,11 @@ public class InquiryService {
 
             //  파일 엔티티 생성 후 저장
             File fileEntity = new File(
-                fileUrl,
-                originalFilename,
-                (int) file.getSize(),
-                FileExtension.valueOf(extension), //  문자열을 Enum으로 변환
-                FileType.INQUIRY
+                    fileUrl,
+                    originalFilename,
+                    (int) file.getSize(),
+                    FileExtension.valueOf(extension), //  문자열을 Enum으로 변환
+                    FileType.INQUIRY
             );
 
             fileRepository.save(fileEntity);
@@ -121,10 +120,10 @@ public class InquiryService {
     }
 
     @Transactional
-    public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, List<MultipartFile> files,Long userId) {
+    public InquiryResponseDto updateInquiry(Long id, InquiryRequestDto dto, List<MultipartFile> files, Long userId) {
         //  문의 사항 조회 (존재하지 않으면 예외 발생)
         Inquiry inquiry = inquiryRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         //  사용자가 작성한 문의 사항인지 확인
         if (!inquiry.getUser().getId().equals(userId)) {
@@ -158,8 +157,8 @@ public class InquiryService {
 
             // 새로운 파일 업로드 및 저장
             List<InquiryFile> inquiryFiles = files.stream()
-                .map(file -> uploadFile(file, inquiry))
-                .collect(Collectors.toList());
+                    .map(file -> uploadFile(file, inquiry))
+                    .collect(Collectors.toList());
 
             inquiryFileRepository.saveAll(inquiryFiles);
         }
@@ -170,13 +169,9 @@ public class InquiryService {
 
     // 문의 사항 삭제(사용자)
     @Transactional
-    public void deleteInquiry(Long id, String token) {
-        // 문의 사항 조회 (존재하지 않으면 예외 발생)
     public void deleteInquiry(Long id, Long userId) {
         Inquiry inquiry = inquiryRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
-
-        Long userId = jwtProvider.getUserId(token);
+                .orElseThrow(() -> new NotFoundException(ExceptionType.INQUIRY_NOT_FOUND));
 
         // 사용자가 작성한 문의 사항인지 확인
         if (!inquiry.getUser().getId().equals(userId)) {
@@ -228,9 +223,9 @@ public class InquiryService {
                 inquiry.getSubject(),
                 inquiry.getContent(),
                 inquiry.getStatus(),
-            inquiry.getInquiryFiles().stream()
-                .map(inquiryFile -> inquiryFile.getFile().getUrl()) // 파일 URL만 추출
-                .collect(Collectors.toList()),
+                inquiry.getInquiryFiles().stream()
+                        .map(inquiryFile -> inquiryFile.getFile().getUrl()) // 파일 URL만 추출
+                        .collect(Collectors.toList()),
                 inquiry.getCreatedAt(),
                 inquiry.getModifiedAt()
         );
