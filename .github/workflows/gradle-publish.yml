@@ -1,0 +1,63 @@
+name: docker multi-stage build
+
+on:
+  push:
+    branches: [ develop ] # 해당 branch에 push 되었을 경우
+
+  # https://github.com/marketplace/actions/build-and-push-docker-images
+
+jobs:
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USER_NAME }}/movie15:latest
+  # Ec2 에 배포
+  deploy-to-ec2:
+    needs: docker-build-and-push
+    runs-on: ubuntu-latest
+    # https://github.com/marketplace/actions/ssh-remote-commands
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          script: |
+            CONTAINER_ID=$(sudo docker ps -q --filter "publish=8080-8080")
+
+            if [ ! -z "$CONTAINER_ID" ]; then
+              sudo docker stop $CONTAINER_ID
+              sudo docker rm $CONTAINER_ID
+            fi
+
+            sudo docker pull ${{ secrets.DOCKER_USER_NAME }}/movie15:latest
+            sudo docker run -d -p 8080:8080 \
+                -e ACCESS_KEY=${{ secrets.ACCESS_KEY }} \
+                -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+                -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                -e DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
+                -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+                -e MAIL_ACCOUNT=${{ secrets.MAIL_ACCOUNT }} \
+                -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
+                -e MDB_API_KEY=${{ secrets.MDB_API_KEY }} \
+                -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
+                ${{ secrets.DOCKER_USER_NAME }}/movie15:latest
