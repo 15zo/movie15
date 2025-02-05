@@ -57,7 +57,7 @@ jobs:
                 -e DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
                 -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
                 -e MAIL_ACCOUNT=${{ secrets.MAIL_ACCOUNT }} \
-                -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
+                -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
                 -e MDB_API_KEY=${{ secrets.MDB_API_KEY }} \
                 -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
                 ${{ secrets.DOCKER_USER_NAME }}/movie15:latest
