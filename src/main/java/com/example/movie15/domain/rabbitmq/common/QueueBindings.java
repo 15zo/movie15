@@ -21,6 +21,7 @@ public final class QueueBindings {
     public static final String EMAIL_DELAY_QUEUE = "emailDelayQueue";
     public static final String CHARGE_QUEUE = "chargeQueue";
     public static final String CANCEL_QUEUE = "cancelQueue";
+    public static final String PAYMENT_QUEUE = "paymentQueue";
 
     // Dead Letter 관련 추가
     public static final String USER_DLQ = "userDeadLetterQueue"; // 큐이름

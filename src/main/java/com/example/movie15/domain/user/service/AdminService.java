@@ -9,21 +9,12 @@ import com.example.movie15.global.exception.ExceptionType;
 import com.example.movie15.global.exception.ForbiddenException;
 import com.example.movie15.global.exception.NotFoundException;
 import com.example.movie15.global.security.JwtProvider;
-import lombok.AllArgsConstructor;
+import com.example.movie15.global.security.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-
-import static com.example.movie15.domain.user.entity.QUser.user;
 
 @Service
 @Transactional
@@ -34,62 +25,54 @@ public class AdminService {
     private final JwtProvider jwtProvider;
 
     // 모든 유저 조회
-    public List<UserResponseDto> getAllUsers(String token) {
-        validateAdmin(token);
+    public List<UserResponseDto> getAllUsers(UserDetailsImpl adminDetails) {
+        validateAdmin(adminDetails);
         List<User> users = userRepository.findAll();
-        return users.stream()
-                .map(UserResponseDto::new)
-                .toList();  // 유저가 없으면 빈 리스트 반환
+        return users.stream().map(UserResponseDto::new).toList();
     }
 
     // 유저 상세 조회
-    public UserResponseDto getUserDetails(Long userId, String token) {
-        validateAdmin(token);
+    public UserResponseDto getUserDetails(Long userId, UserDetailsImpl adminDetails) {
+        validateAdmin(adminDetails);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
         return new UserResponseDto(user);
     }
 
     // 유저 권한 변경
-    public void updateUserRole(Long userId, String newRole, String token) {
-        validateAdmin(token);
+    public void updateUserRole(Long userId, String newRole, UserDetailsImpl adminDetails) {
+        validateAdmin(adminDetails);
         User user = userRepository.findById(userId).
                 orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
-        // newRole 값 검증
-        if (newRole == null || newRole.isBlank()) {
-            throw new BadValueException(ExceptionType.NOT_BLANK);
+        if (user.isDeleted()) {
+            throw new BadValueException(ExceptionType.ALREADY_DELETED_USER);
         }
 
-        // 역할 검증
-        Role role;
         try {
-            role = Role.valueOf(newRole.toUpperCase());
+            Role role = Role.valueOf(newRole.toUpperCase());
+            user.changeRole(role);
         } catch (IllegalArgumentException e) {
             throw new BadValueException(ExceptionType.INVALID_USER_ROLE);
         }
-
-        user.changeRole(role);
     }
 
     // 유저 삭제
-    public void deleteUser(Long userId, String token) {
-        validateAdmin(token);
+    public void deleteUser(Long userId, UserDetailsImpl adminDetails) {
+        validateAdmin(adminDetails);
 
         User user = userRepository.findById(userId).
                 orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
-        user.updateIsDeleted();
-        userRepository.save(user);
-    }
-
-    // JWT를 통한 토큰 유효성 검증 및 관리자 권한 검증
-    private void validateAdmin(String token) {
-        if (!jwtProvider.validToken(token)) {
-            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        if (user.isDeleted()) {
+            throw new BadValueException(ExceptionType.ALREADY_DELETED_USER);
         }
 
-        if (!jwtProvider.isAdmin(token)) {
+        user.updateIsDeleted();
+    }
+
+    private void validateAdmin(UserDetailsImpl adminDetails) {
+        if (!adminDetails.getUser().hasAdminRole()) {
             throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
     }

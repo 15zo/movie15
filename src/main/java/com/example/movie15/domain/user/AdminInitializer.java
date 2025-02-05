@@ -35,7 +35,7 @@ public class AdminInitializer {
                     Role.ADMIN
             );
             userRepository.save(admin);
-            log.info("기본 관리자 계정이 생성되었습니다: " + adminEmail);
+            log.info("기본 관리자 계정이 생성되었습니다: {}", adminEmail);
         } else {
             log.info("관리자 계정이 이미 존재합니다.");
         }

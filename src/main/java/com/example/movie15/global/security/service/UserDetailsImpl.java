@@ -16,6 +16,10 @@ public class UserDetailsImpl implements UserDetails {
 
     private final User user;
 
+    public Long getId() {
+        return this.user.getId();
+    }
+
     // 계정의 권한 목록을 반환
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

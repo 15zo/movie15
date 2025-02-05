@@ -1,24 +1,23 @@
 package com.example.movie15.global.security;
 
-import com.example.movie15.global.exception.BadValueException;
 import com.example.movie15.global.exception.ExceptionType;
-import io.jsonwebtoken.*;
+import com.example.movie15.global.exception.ForbiddenException;
+import com.example.movie15.global.exception.WrongAccessException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
@@ -28,167 +27,178 @@ public class JwtProvider {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Getter
-    @Value("${jwt.expiry-millis}")
-    private long expiryMillis;
+    @Value("${jwt.access-expiry-millis}")
+    private long accessExpiryMillis;
+
+    @Value("${jwt.refresh-expiry-millis}")
+    private long refreshExpiryMillis;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    // 1. 설정 및 초기화 관련 메소드
-    // secret과 expriyMillis 유효성 검증
+
     @PostConstruct
     private void validateProperties() {
         if (secret == null || secret.isEmpty()) {
             throw new IllegalStateException("JWT_SECRET_KEY 값이 설정되지 않았거나 비어 있습니다.");
         }
-        if (expiryMillis <= 0) {
-            throw new IllegalStateException("jwt.expiry-millis 값은 0보다 커야 합니다.");
+        if (accessExpiryMillis <= 0 || refreshExpiryMillis <= 0) {
+            throw new IllegalStateException("토큰 만료 시간이 0보다 커야 합니다.");
         }
-        log.info("JWT_SECRET_KEY와 expiryMillis가 정상적으로 로드되었습니다.");
+        log.info("JWT_SECRET_KEY와 토큰 만료 시간 설정이 정상적으로 로드되었습니다.");
     }
 
-    // 2. 토큰 생성 메소드
-    // JWT 토큰 생성
-    public String generateToken(Authentication authentication, Long userId) {
-        String username = authentication.getName();
-        String role = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("권한이 없습니다."));
-
-        Date currentDate = new Date();
-        Date expireDate = new Date(currentDate.getTime() + this.expiryMillis);
+    // 토큰 생성
+    public String generateToken(Long userId, String role, long expiryMillis) {
+        Date now = new Date();
+        Date expireDate = new Date(now.getTime() + expiryMillis);
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .issuedAt(currentDate)
-                .expiration(expireDate)
-                .claim("username", username)
                 .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(expireDate)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 임시 토큰 생성 -> 이메일 인증, 탈퇴 전 비밀번호 확인, 회원정보변경(비밀번호변경)에서 사용됨.
-    public String tempToken(Authentication authentication) {
-        String username = authentication.getName();
-        Date currentDate = new Date();
-        Date expireDate = new Date(currentDate.getTime() + 60000);  // 임시 토큰 만료 시간: 1분
-
-        return Jwts.builder()
-                .subject(username)
-                .claim("type", "temp")
-                .issuedAt(currentDate)
-                .expiration(expireDate)
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
-                .compact();
+    public String generateAccessToken(Long userId, String role) {
+        return generateToken(userId, role, accessExpiryMillis);
     }
 
-    // 3. 토큰 유효성 및 무효화 관련 메소드
-    // 토큰 유효성 검사(무효화된 토큰 포함)
-    public boolean validToken(String token) throws JwtException {
-        if (isTokenInvalidated(token)) {
-            log.error("무효화된 토큰입니다. token: {}", token);
+    public String generateRefreshToken(Long userId, String role) {
+        return generateToken(userId, role, refreshExpiryMillis);
+    }
+
+    // Authorization 헤더에서 토큰 추출
+    public String extractToken(String headerValue) {
+        if (headerValue != null && headerValue.startsWith("Bearer ")) {
+            return headerValue.substring(7);
+        } else {
+            throw new IllegalArgumentException("유효하지 않은 Authorization 헤더 값입니다.");
+        }
+    }
+
+    // 토큰 검증
+    public boolean validateToken(String token) {
+        try {
+            log.info("토큰 검증 시작: {}", token);
+            if (isBlacklisted(token)) {
+                log.warn("블랙리스트에 등록된 토큰: {}", token);
+                throw new WrongAccessException(ExceptionType.BLACKLISTED_TOKEN);
+            }
+
+            Claims claims = Jwts.parser()
+                    .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            if (claims.getExpiration().before(new Date())) {
+                log.warn("만료된 토큰: {}", token);
+                throw new WrongAccessException(ExceptionType.EXPIRED_TOKEN);
+            }
+
+            log.info("토큰 검증 성공: {}", token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("유효하지 않은 토큰: {}", e.getMessage());
             return false;
         }
-        try {
-            return !this.tokenExpired(token);
-        } catch (MalformedJwtException e) {
-            log.error("잘못된 JWT 토큰입니다.: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            log.error("JWT 토큰이 만료됐습니다.: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("지원되지 않는 JWT 토큰입니다.: {}", e.getMessage());
-        }
-        return false;
     }
 
-    // Authorization 헤더에서 Bearer 토큰 추출
-    public String extractToken(String header) {
-        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            return header.substring(7); // "Bearer " 이후의 토큰 반환
-        }
-        throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
-    }
-
-    // 토큰이 무효화됐는지 확인
-    public boolean isTokenInvalidated(String token) {
-        return redisTemplate.hasKey(token);
-    }
-
-    // 토큰 무효화
-    public void invalidateToken(String token) {
-        Claims claims = getClaims(token);
-        Date expiration = claims.getExpiration();
-
-        // Redis에 토큰 저장 (만료 시간 설정)
-        redisTemplate.opsForValue().set(token, "invalid", expiration.getTime() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        log.info("토큰이 무효화됐습니다. token: {}, 만료 시간: {}", token, expiration);
-    }
-
-    // 4. JWT 클레임 및 속성 처리 메소드
-    // 토큰에서 사용자 ID 추출
+    // 토큰의 사용자 ID 추출
     public Long getUserId(String token) {
-        Claims claims = this.getClaims(token);
-        return Long.valueOf(claims.getSubject());
+        return Long.valueOf(Jwts.parser()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject());
     }
 
-    // 토큰에서 사용자 이름 추출
-    public String getUsername(String token) {
-        Claims claims = this.getClaims(token);
-        return claims.get("username", String.class);
-    }
+    // 토큰을 통해 Admin 권한이 있는지 검증
+    public boolean hasAdminRole(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
 
-    // 임시 토큰 여부 확인
-    public boolean isTempToken(String token) {
-        Claims claims = getClaims(token);
-        System.out.println(claims.get("type"));
-        return "temp".equals(claims.get("type"));
-    }
-
-    // JWT의 claim 부분을 추출
-    private Claims getClaims(String token) {
-        if (!StringUtils.hasText(token)) {
-            throw new MalformedJwtException("토큰이 비어 있습니다.");
+        String role = claims.get("role", String.class);
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
-        try {
-            return Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (JwtException e) {
-            log.error("JWT 토큰 처리 중 오류 발생: {}", e.getMessage());
-            throw e;
+        return true;
+    }
+
+    // 리프레시 토큰 저장(Redis)
+    public void storeRefreshToken(Long userId, String refreshToken) {
+        String rediskey = "refreshToken:" + userId;
+        redisTemplate.opsForValue().set(rediskey, refreshToken, refreshExpiryMillis, TimeUnit.MILLISECONDS);
+        log.info("리프레시 토큰 저장 완료: userId={}, token 끝자리 ={}", userId, refreshToken.substring(refreshToken.length() - 5));
+    }
+
+    // 리프레시 토큰 검증
+    public boolean validateStoredRefreshToken(Long userId, String refreshToken) {
+        String redisKey = "refreshToken:" + userId;
+        String storedToken = (String) redisTemplate.opsForValue().get(redisKey);
+        return refreshToken.equals(storedToken);
+    }
+
+    // Redis 키의 TTL 확인(리프레시 토큰, 블랙리스트 토큰 만료 시간)
+    public Long getKeyTTL(String key) {
+        Long ttl = redisTemplate.getExpire(key, TimeUnit.MILLISECONDS);
+        if (ttl == null || ttl < 0) {
+            log.warn("Redis 키의 TTL이 설정되지 않았거나 만료됐습니다: {}", key);
+        }
+        return ttl;
+    }
+
+    // Redis 키 삭제
+    public void deleteKey(String key) {
+        Boolean deleted = redisTemplate.delete(key);
+        if (Boolean.TRUE.equals(deleted)) {
+            log.info("Redis 키 삭제 완료: {}", key);
+        } else {
+            log.warn("Redis 키 삭제 실패 또는 키가 존재하지 않습니다: {}", key);
         }
     }
 
-    // 입력 받은 토큰의 만료 여부 확인
-    private boolean tokenExpired(String token) {
-        final Date expiration = this.getExpirationDateFromToken(token);
-        return expiration.before(new Date());
+    // 토큰 블랙리스트 처리
+    public void blacklistToken(String token) {
+        String redisKey = "blacklist:" + token;
+        long expiryMillis = getRemainingExpiry(token);  // 남은 유효 기간 계산
+        redisTemplate.opsForValue().set(redisKey, "blacklisted", expiryMillis, TimeUnit.MILLISECONDS);
+        log.info("토큰 블랙리스트 처리 완료: token 끝자리={}", token.substring(token.length() - 5));
     }
 
-    // 입력 받은 토큰의 만료일 반환
-    private Date getExpirationDateFromToken(String token) {
+    // 블랙리스트 확인
+    public boolean isBlacklisted(String token) {
+        String redisKey = "blacklist:" + token;
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.MILLISECONDS);
 
-        return this.resolveClaims(token, Claims::getExpiration);
+        if (ttl == null || ttl <= 0) {
+            log.info("블랙리스트 키가 없거나 만료됐습니다: {}", redisKey);
+            return false;
+        }
+
+        log.info("블랙리스트 키 존재: {} (TTL: {}ms)", redisKey, ttl);
+        return true;
     }
 
-    // 주어진 JWT 토큰에서 role 정보 추출
-    public String getRoleFromToken(String token) {
-        return resolveClaims(token, claims -> claims.get("role", String.class));
-    }
+    // 토큰 남은 만료 시간 계산(액세스 토큰 만료 시간)
+    private long getRemainingExpiry(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
 
-    // 주어진 JWT 토큰이 ADMIN 권한을 갖고 있는지 검증
-    public boolean isAdmin(String token) {
-        String role = getRoleFromToken(token);
-        return "ROLE_ADMIN".equals(role);
-    }
-
-    // 토큰에 입력된 로직을 적용 및 결과를 반환
-    private <T> T resolveClaims(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = this.getClaims(token);
-        return claimsResolver.apply(claims);
+        long remainingTime = claims.getExpiration().getTime() - System.currentTimeMillis();
+        if (remainingTime <= 0) {
+            log.warn("토큰 만료 시간이 0 이하입니다: {}", token);
+            throw new IllegalArgumentException("토큰이 이미 완료됐습니다.");
+        }
+        return remainingTime;
     }
 }
