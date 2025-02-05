@@ -170,6 +170,12 @@ public class JwtProvider {
         long expiryMillis = getRemainingExpiry(token);  // 남은 유효 기간 계산
         redisTemplate.opsForValue().set(redisKey, "blacklisted", expiryMillis, TimeUnit.MILLISECONDS);
         log.info("토큰 블랙리스트 처리 완료: token 끝자리={}", token.substring(token.length() - 5));
+
+        // 블랙리스트에 등록된 토큰의 TTL을 주기적으로 확인
+        Long ttl = getKeyTTL(redisKey);
+        if (ttl != null && ttl <= 0) {
+            deleteKey(redisKey);
+        }
     }
 
     // 블랙리스트 확인

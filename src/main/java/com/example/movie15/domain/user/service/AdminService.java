@@ -6,10 +6,8 @@ import com.example.movie15.domain.user.entity.User;
 import com.example.movie15.domain.user.repository.UserRepository;
 import com.example.movie15.global.exception.BadValueException;
 import com.example.movie15.global.exception.ExceptionType;
-import com.example.movie15.global.exception.ForbiddenException;
 import com.example.movie15.global.exception.NotFoundException;
 import com.example.movie15.global.security.JwtProvider;
-import com.example.movie15.global.security.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,23 +23,22 @@ public class AdminService {
     private final JwtProvider jwtProvider;
 
     // 모든 유저 조회
-    public List<UserResponseDto> getAllUsers(UserDetailsImpl adminDetails) {
-        validateAdmin(adminDetails);
+    public List<UserResponseDto> getAllUsers() {
+
+
         List<User> users = userRepository.findAll();
         return users.stream().map(UserResponseDto::new).toList();
     }
 
     // 유저 상세 조회
-    public UserResponseDto getUserDetails(Long userId, UserDetailsImpl adminDetails) {
-        validateAdmin(adminDetails);
+    public UserResponseDto getUserDetails(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
         return new UserResponseDto(user);
     }
 
     // 유저 권한 변경
-    public void updateUserRole(Long userId, String newRole, UserDetailsImpl adminDetails) {
-        validateAdmin(adminDetails);
+    public void updateUserRole(Long userId, String newRole) {
         User user = userRepository.findById(userId).
                 orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
@@ -58,8 +55,7 @@ public class AdminService {
     }
 
     // 유저 삭제
-    public void deleteUser(Long userId, UserDetailsImpl adminDetails) {
-        validateAdmin(adminDetails);
+    public void deleteUser(Long userId) {
 
         User user = userRepository.findById(userId).
                 orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
@@ -69,11 +65,5 @@ public class AdminService {
         }
 
         user.updateIsDeleted();
-    }
-
-    private void validateAdmin(UserDetailsImpl adminDetails) {
-        if (!adminDetails.getUser().hasAdminRole()) {
-            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
-        }
     }
 }
