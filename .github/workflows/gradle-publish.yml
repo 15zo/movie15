@@ -51,4 +51,13 @@ jobs:
 
             sudo docker pull ${{ secrets.DOCKER_USER_NAME }}/movie15:latest
             sudo docker run -d -p 8080:8080 \
+                -e ACCESS_KEY=${{ secrets.ACCESS_KEY }} \
+                -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+                -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                -e DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
+                -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+                -e MAIL_ACCOUNT=${{ secrets.MAIL_ACCOUNT }} \
+                -e MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }} \
+                -e MDB_API_KEY=${{ secrets.MDB_API_KEY }} \
+                -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
                 ${{ secrets.DOCKER_USER_NAME }}/movie15:latest

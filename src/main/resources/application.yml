@@ -56,7 +56,7 @@ redis:
 cloud:
   aws:
     s3:
-      bucket: codesix
+      bucket: cienlink
     credentials:
       access-key: ${ACCESS_KEY}
       secret-key: ${SECRET_KEY}
