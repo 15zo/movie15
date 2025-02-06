@@ -30,7 +30,7 @@ public class InquiryController {
 
     // 문의 사항 작성
     @PostMapping
-    public ResponseEntity<InquiryResponseDto> createInquiry(
+    public ResponseEntity<String> createInquiry(
             @RequestPart(name = "inquiry") String inquiryJson,
             @RequestPart(name = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
@@ -39,8 +39,8 @@ public class InquiryController {
         InquiryRequestDto dto = objectMapper.readValue(inquiryJson, InquiryRequestDto.class);
         Long userId = userDetails.getId();
 
-        InquiryResponseDto response = inquiryService.createInquiry(dto, files, userId);
-        return ResponseEntity.status(201).body(response);
+        inquiryService.createInquiry(dto, files, userId);
+        return ResponseEntity.status(201).body("문의 생성완료 ");
     }
 
     // 문의 사항 조회(사용자 본인)

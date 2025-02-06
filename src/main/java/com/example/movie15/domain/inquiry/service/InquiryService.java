@@ -17,14 +17,19 @@ import com.example.movie15.global.repository.FileRepository;
 import com.example.movie15.global.security.JwtProvider;
 import com.example.movie15.global.security.service.UserDetailsImpl;
 import com.example.movie15.global.service.FileUploaderService;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,27 +43,29 @@ public class InquiryService {
     private final FileRepository fileRepository;
     private final InquiryFileRepository inquiryFileRepository;
 
+
     /**
      * 문의 사항 생성 (첨부파일 포함)
      */
     @Transactional
-    public InquiryResponseDto createInquiry(InquiryRequestDto dto, List<MultipartFile> files, Long userId) throws IOException {
+    public void createInquiry(InquiryRequestDto dto, List<MultipartFile> files, Long userId) throws IOException {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
+            .orElseThrow(() -> new NotFoundException(ExceptionType.USER_NOT_FOUND));
 
         Inquiry inquiry = new Inquiry(dto.getSubject(), dto.getContent(), user);
         inquiryRepository.save(inquiry);
 
-        //  파일 업로드 처리 (첨부파일이 있는 경우)
         if (files != null && !files.isEmpty()) {
+            List<InquiryFile> inquiryFiles = new ArrayList<>();
             for (MultipartFile file : files) {
                 InquiryFile inquiryFile = uploadFile(file, inquiry);
-                inquiry.getInquiryFiles().add(inquiryFile); //  inquiryFiles 리스트에 추가
+                inquiryFiles.add(inquiryFile);
             }
+            inquiryFileRepository.saveAll(inquiryFiles);
         }
-        inquiryRepository.save(inquiry);
-        return new InquiryResponseDto(inquiry);
+
+        // 반환값 없음 (void)
     }
 
     /**
