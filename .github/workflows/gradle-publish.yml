@@ -60,4 +60,6 @@ jobs:
                 -e MAIL_PASSWORD='${{ secrets.MAIL_PASSWORD }}' \
                 -e MDB_API_KEY=${{ secrets.MDB_API_KEY }} \
                 -e SECRET_KEY=${{ secrets.SECRET_KEY }} \
+                -e REDIS_HOST=${{ secrets.REDIS_HOST }} \
+                -e RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }} \
                 ${{ secrets.DOCKER_USER_NAME }}/movie15:latest

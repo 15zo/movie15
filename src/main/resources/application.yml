@@ -17,7 +17,7 @@ spring:
     password: ${DATABASE_PASSWORD}
 
   rabbitmq:
-    host: localhost
+    host: ${RABBITMQ_HOST}
     port: 5672
     username: guest
     password: guest
@@ -39,7 +39,7 @@ spring:
 
   data:
     redis:
-      host: 127.0.0.1
+      host: ${REDIS_HOST}
       port: 6379
       password: 1234
 
@@ -47,11 +47,6 @@ jwt:
   secret: ${JWT_SECRET_KEY}
   access-expiry-millis: 1800000  # 액세스 토큰 만료: 30분
   refresh-expiry-millis: 864000000 # 리프레시 토큰 만료: 10일
-
-redis:
-  host: localhost
-  port: 6379
-  timeout: 2000ms
 
 cloud:
   aws:
@@ -94,6 +89,3 @@ payment:
 tmdb:
   api-key: ${MDB_API_KEY}
   base-url: "https://api.themoviedb.org/3"
-
-
-
