@@ -21,7 +21,7 @@ public class SignupEmailSenderService {
 
         // TODO : 배포 시 주소 변경 필요
         // 사용자가 클릭할 인증 링크
-        String verificationLink = "http://localhost:8080/api/verify?token=" + token;
+        String verificationLink = "15.164.0.230:8080/api/verify?token=" + token;
 
         // 이메일 설정 (HTML)
         MimeMessage mimeMessage = mailSender.createMimeMessage();
