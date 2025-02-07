@@ -11,16 +11,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -48,6 +52,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         new AntPathRequestMatcher("/api/movies/{movieId}", HttpMethod.GET.toString())
     };
 
+    private static final AntPathRequestMatcher[] BLACK_LIST = {
+        new AntPathRequestMatcher("/api/movies/popular", HttpMethod.GET.toString())
+    };
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterchain)
             throws ServletException, IOException {
@@ -55,7 +63,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
 
         // 화이트 리스트 경로는 필터를 생략
-        if (isWhiteListed(request.getRequestURI())) {
+        if (isWhiteListed(request)) {
             log.info("화이트리스트 경로 요청: {} - 인증 생략", requestURI);
             filterchain.doFilter(request, response);
             return;
@@ -76,10 +84,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     // 요청 경로가 화이트리스트인지 확인
-    private boolean isWhiteListed(String path) {
-        for (String whiteListedPath : WHITE_LIST) {
-            if (path.startsWith(whiteListedPath)) {
-                return true;
+    private static boolean isWhiteListed(HttpServletRequest request) {
+        for (AntPathRequestMatcher whiteListedPath : WHITE_LIST) {
+            for (AntPathRequestMatcher blackListedPath : BLACK_LIST) {
+                if (whiteListedPath.matches(request) && !blackListedPath.matches(request)) {
+                    return true;
+                }
             }
         }
         return false;

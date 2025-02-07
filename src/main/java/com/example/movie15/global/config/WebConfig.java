@@ -1,5 +1,7 @@
 package com.example.movie15.global.config;
 
+import java.util.List;
+
 import com.example.movie15.global.filter.JwtAuthFilter;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +9,7 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -52,7 +55,6 @@ public class WebConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
-
         return builder.build();
     }
 
