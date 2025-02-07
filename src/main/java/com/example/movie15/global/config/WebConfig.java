@@ -36,6 +36,7 @@ public class WebConfig {
     private final AuthenticationProvider authenticationProvider;
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
+    
 
     private static final String[] WHITE_LIST = {
         "/api/users/signup",

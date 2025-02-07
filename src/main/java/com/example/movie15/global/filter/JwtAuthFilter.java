@@ -34,6 +34,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final UserDetailsService userDetailsService;
 
+
     // 화이트 리스트 경로(토큰 검증을 생략할 경로들)
     private static final AntPathRequestMatcher[] WHITE_LIST = {
         new AntPathRequestMatcher("/api/users/signup"),
