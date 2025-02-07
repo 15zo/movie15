@@ -16,7 +16,8 @@ public class SchedulerConfig {
 private final MovieService movieService;
 
 	//fixedDelay = 10000 테스트용 10초마다 한 번 씩
-	@Scheduled(cron="0 55 03 * * ?")
+	//@Scheduled(cron="0 55 03 * * ?")
+	@Scheduled(cron="0 08 21 * * ?")
 	public void updatePopularMoviesJob() throws Exception {
 		movieService.savePopularMoviesToDatabase();
 		movieService.softDeleteOldMovies();
