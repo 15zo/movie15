@@ -53,7 +53,6 @@ public class WebConfig {
         "api/runtimes/**"
     };
 
-
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         return builder.build();
