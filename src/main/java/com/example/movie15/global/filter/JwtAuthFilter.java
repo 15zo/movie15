@@ -31,14 +31,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     // 화이트 리스트 경로(토큰 검증을 생략할 경로들)
-    private static final String[] WHITE_LIST = {
-            "/api/users/signup",
-            "/api/users/login",
-            "/api/user/refresh",
-            "/api/error",
-            "/api/verify",
-            "/api/movies/**",
-            "/api/cinemas/**"
+    private static final AntPathRequestMatcher[] WHITE_LIST = {
+        new AntPathRequestMatcher("/api/users/signup"),
+        new AntPathRequestMatcher("/api/users/login"),
+        new AntPathRequestMatcher("/api/users/refresh"),
+        new AntPathRequestMatcher("/api/error"),
+        new AntPathRequestMatcher("/api/verify"),
+        new AntPathRequestMatcher("/api/movies"),
+        new AntPathRequestMatcher("/api/movies/search"),
+        new AntPathRequestMatcher("/api/movies/playing"),
+        new AntPathRequestMatcher("/api/cinemas/**"),
+        new AntPathRequestMatcher("/api/payment/**"),
+        new AntPathRequestMatcher("/api/booking/**"),
+        new AntPathRequestMatcher("api/runtimes"),
+        new AntPathRequestMatcher("api/runtimes/**"),
+        new AntPathRequestMatcher("/api/movies/{movieId}", HttpMethod.GET.toString())
     };
 
     @Override
@@ -60,9 +67,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterchain.doFilter(request, response);
         } catch (BadValueException e) {
             // 인증 실패 처리
+            response.setContentType("application/json; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            response.getWriter().write("{\"message\": \"인증이 필요합니다 - 토큰필요\"}");
         }
     }
 
