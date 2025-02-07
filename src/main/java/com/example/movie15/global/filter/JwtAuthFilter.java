@@ -56,6 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         new AntPathRequestMatcher("/api/movies/popular", HttpMethod.GET.toString())
     };
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterchain)
             throws ServletException, IOException {
