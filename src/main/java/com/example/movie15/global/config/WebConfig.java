@@ -20,6 +20,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -33,7 +34,21 @@ public class WebConfig {
     private final AuthenticationEntryPoint authEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
 
-    private static final String[] WHITE_LIST = {"/api/users/signup", "/api/users/login", "/api/users/refresh", "/api/error", "/api/verify", "/api/movies/**","/api/cinemas/**", "/api/payment/**", "/api/booking/**", "api/runtimes","api/runtimes/**"};
+    private static final String[] WHITE_LIST = {
+        "/api/users/signup",
+        "/api/users/login",
+        "/api/users/refresh",
+        "/api/error",
+        "/api/verify",
+        "/api/movies",
+        "/api/movies/search",
+        "/api/movies/playing",
+        "/api/cinemas/**",
+        "/api/payment/**",
+        "/api/booking/**",
+        "api/runtimes",
+        "api/runtimes/**"
+    };
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
@@ -49,8 +64,12 @@ public class WebConfig {
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(WHITE_LIST).permitAll()
                                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.INCLUDE,
-                                        DispatcherType.ERROR).permitAll().anyRequest().authenticated()
+                                .requestMatchers(HttpMethod.GET, "/api/movies/{movieId}").permitAll()
+                                .dispatcherTypeMatchers(
+                                        DispatcherType.FORWARD,
+                                        DispatcherType.INCLUDE,
+                                        DispatcherType.ERROR).permitAll()
+                                .anyRequest().authenticated()
                 )
                 // Spring Security 예외에 대한 처리를 핸들러에 위임
                 .exceptionHandling(handler -> handler
@@ -60,7 +79,7 @@ public class WebConfig {
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterAfter(jwtAuthFilter, ExceptionTranslationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
