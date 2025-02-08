@@ -1,7 +1,6 @@
 package com.example.movie15.global.security;
 
 import com.example.movie15.global.exception.ExceptionType;
-import com.example.movie15.global.exception.ForbiddenException;
 import com.example.movie15.global.exception.WrongAccessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
