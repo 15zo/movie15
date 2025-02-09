@@ -32,6 +32,7 @@ public enum ExceptionType {
     WRONG_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     DELETED_EMAIL_REUSE(HttpStatus.BAD_REQUEST, "탈퇴한 유저의 이메일은 재가입이 불가능합니다."),
     ALREADY_DELETED_USER(HttpStatus.BAD_REQUEST, "이미 탈퇴하거나 삭제된 유저입니다."),
+    ALREADY_SAME_ROLE(HttpStatus.BAD_REQUEST, "이미 해당 권한의 상태입니다."),
     MISSING_BEARER_TOKEN(HttpStatus.BAD_REQUEST, "Authorization 헤더에 Bearer 토큰이 포함돼야 합니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않은 리프레쉬 토큰입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레쉬 토큰이 만료됐습니다."),

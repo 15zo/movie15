@@ -1,7 +1,5 @@
 package com.example.movie15.global.config;
 
-import java.util.List;
-
 import com.example.movie15.global.filter.JwtAuthFilter;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +11,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,11 +19,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 @EnableWebSecurity
 @Configuration
@@ -38,19 +33,19 @@ public class WebConfig {
     private final AccessDeniedHandler accessDeniedHandler;
 
     private static final String[] WHITE_LIST = {
-        "/api/users/signup",
-        "/api/users/login",
-        "/api/users/refresh",
-        "/api/error",
-        "/api/verify",
-        "/api/movies",
-        "/api/movies/search",
-        "/api/movies/playing",
-        "/api/cinemas/**",
-        "/api/payment/**",
-        "/api/booking/**",
-        "api/runtimes",
-        "api/runtimes/**"
+            "/api/users/signup",
+            "/api/users/login",
+            "/api/users/refresh",
+            "/api/error",
+            "/api/verify",
+            "/api/movies",
+            "/api/movies/search",
+            "/api/movies/playing",
+            "/api/cinemas/**",
+            "/api/payment/**",
+            "/api/booking/**",
+            "api/runtimes",
+            "api/runtimes/**"
     };
 
     @Bean
