@@ -42,7 +42,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             new AntPathRequestMatcher("/api/movies"),
             new AntPathRequestMatcher("/api/movies/search"),
             new AntPathRequestMatcher("/api/movies/playing"),
-            new AntPathRequestMatcher("/api/cinemas/**"),
+
             new AntPathRequestMatcher("/api/payment/**"),
             new AntPathRequestMatcher("/api/booking/**"),
             new AntPathRequestMatcher("api/runtimes"),
@@ -124,9 +124,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         // 관리자 권한 확인
-        if (request.getRequestURI().startsWith("/api/admins") && !jwtProvider.hasRole(token, "ADMIN")) {
-            log.warn("관리자 권한이 없는 사용자 접근: {}", request.getRequestURI());
-            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+        if (request.getRequestURI().startsWith("/api/admins") || request.getRequestURI().startsWith("/api/cinemas")) {
+            if (!jwtProvider.hasRole(token, "ADMIN")) {
+                log.warn("관리자 권한이 없는 사용자 접근: {}", request.getRequestURI());
+                throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
+            }
         }
 
         // 사용자 인증 처리
