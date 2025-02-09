@@ -1,6 +1,8 @@
 ## CineLink
 
-![image.webp](../../../../../Downloads/image.webp)
+![image](https://github.com/user-attachments/assets/34634a62-b3a3-49b4-ae19-b2b93039518b)
+
+
 #### 당신과 영화의 특별한 만남, ClineLink가 이어드립니다.
 - **최신 영화 및 상영관 정보 제공**: 개봉 예정작과 현재 상영 중인 영화 정보를 확인할 수 있습니다.
 - **간편한 예매 및 결제**: 원하는 영화, 극장, 좌석을 선택하고 간편하게 결제할 수 있습니다.
@@ -148,11 +150,13 @@
 </details>
 
 ## 인프라 설계도
-![인프라_설계도531_.drawio.webp](../../../../../Downloads/%EC%9D%B8%ED%94%84%EB%9D%BC_%EC%84%A4%EA%B3%84%EB%8F%84531_.drawio.webp)
+![인프라_설계도531_ drawio](https://github.com/user-attachments/assets/10d77627-5652-40a0-9197-b934232c58b6)
 
 ## API 명세서
 https://www.notion.so/teamsparta/cca7fb9345e549a9b278e8510e8e6288?v=ab8ed301c39040bda8d283fc700b7b6e&pvs=4
 
 
 ## ERD
-![롯데십오네마_ERD.webp](../../../../../Downloads/%EB%A1%AF%EB%8D%B0%EC%8B%AD%EC%98%A4%EB%84%A4%EB%A7%88_ERD.webp)
+![롯데십오네마_ERD](https://github.com/user-attachments/assets/9b504ffb-2367-4f52-81e6-f6ec23e393ce)
+
+
