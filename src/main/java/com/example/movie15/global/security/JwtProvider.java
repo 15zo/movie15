@@ -77,6 +77,22 @@ public class JwtProvider {
         }
     }
 
+    // 토큰에서 역할(role) 추출
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("role", String.class);
+    }
+
+    // 사용자 역할 확인
+    public boolean hasRole(String token, String requiredRole) {
+        String role = getRoleFromToken(token);
+        return role != null && role.equals(requiredRole);
+    }
+
     // 토큰 검증
     public boolean validateToken(String token) {
         try {
@@ -101,7 +117,7 @@ public class JwtProvider {
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("유효하지 않은 토큰: {}", e.getMessage());
-            return false;
+            throw new WrongAccessException(ExceptionType.INVALID_TOKEN);
         }
     }
 

@@ -2,7 +2,7 @@ package com.example.movie15.global.filter;
 
 import com.example.movie15.global.exception.BadValueException;
 import com.example.movie15.global.exception.ExceptionType;
-import com.example.movie15.global.security.AuthenticationScheme;
+import com.example.movie15.global.exception.ForbiddenException;
 import com.example.movie15.global.security.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,8 +23,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -34,26 +32,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final UserDetailsService userDetailsService;
 
-    // 화이트 리스트 경로(토큰 검증을 생략할 경로들)
+    // 화이트리스트 경로(토큰 검증을 생략할 경로들)
     private static final AntPathRequestMatcher[] WHITE_LIST = {
-        new AntPathRequestMatcher("/api/users/signup"),
-        new AntPathRequestMatcher("/api/users/login"),
-        new AntPathRequestMatcher("/api/users/refresh"),
-        new AntPathRequestMatcher("/api/error"),
-        new AntPathRequestMatcher("/api/verify"),
-        new AntPathRequestMatcher("/api/movies"),
-        new AntPathRequestMatcher("/api/movies/search"),
-        new AntPathRequestMatcher("/api/movies/playing"),
-        new AntPathRequestMatcher("/api/cinemas/**"),
-        new AntPathRequestMatcher("/api/payment/**"),
-        new AntPathRequestMatcher("/api/booking/**"),
-        new AntPathRequestMatcher("api/runtimes"),
-        new AntPathRequestMatcher("api/runtimes/**"),
-        new AntPathRequestMatcher("/api/movies/{movieId}", HttpMethod.GET.toString())
+            new AntPathRequestMatcher("/api/users/signup"),
+            new AntPathRequestMatcher("/api/users/login"),
+            new AntPathRequestMatcher("/api/users/refresh"),
+            new AntPathRequestMatcher("/api/error"),
+            new AntPathRequestMatcher("/api/verify"),
+            new AntPathRequestMatcher("/api/movies"),
+            new AntPathRequestMatcher("/api/movies/search"),
+            new AntPathRequestMatcher("/api/movies/playing"),
+            new AntPathRequestMatcher("/api/cinemas/**"),
+            new AntPathRequestMatcher("/api/payment/**"),
+            new AntPathRequestMatcher("/api/booking/**"),
+            new AntPathRequestMatcher("api/runtimes"),
+            new AntPathRequestMatcher("api/runtimes/**"),
+            new AntPathRequestMatcher("/api/movies/{movieId}", HttpMethod.GET.toString())
     };
 
+    // 블랙리스트 경로(해당 경로 접근 차단)
     private static final AntPathRequestMatcher[] BLACK_LIST = {
-        new AntPathRequestMatcher("/api/movies/popular", HttpMethod.GET.toString())
+            new AntPathRequestMatcher("/api/movies/popular", HttpMethod.GET.toString())
     };
 
     @Override
@@ -62,34 +61,53 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String requestURI = request.getRequestURI();
 
-        // 화이트 리스트 경로는 필터를 생략
+        // 화이트리스트 경로는 필터를 생략
         if (isWhiteListed(request)) {
             log.info("화이트리스트 경로 요청: {} - 인증 생략", requestURI);
             filterchain.doFilter(request, response);
             return;
         }
 
+        // 블랙리스트 경로는 인증을 차단
+        if (isBlacklisted(request)) {
+            log.warn("블랙리스트 경로 요청: {} - 접근 차단", requestURI);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("{\"message\": \"이 경로는 접근이 차단됐습니다.\"}");
+            return;
+        }
+
         try {
-            // 화이트 리스트에 해당하지 않는 요청에 대한 인증 처리
+            // 화이트리스트, 블랙리스트에 해당하지 않는 요청에 대해서는 인증 처리
             authenticate(request);
             filterchain.doFilter(request, response);
         } catch (BadValueException e) {
             // 인증 실패 처리
             response.setContentType("application/json; charset=UTF-8");
-            response.setCharacterEncoding("UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
             response.getWriter().write("{\"message\": \"인증이 필요합니다 - 토큰필요\"}");
+        } catch (ForbiddenException e) {
+            // 관리자 권한이 없을 때 처리
+            response.setContentType("application/json; charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("{\"message\": \"관리자 권한이 필요합니다.\"}");
         }
     }
 
-    // 요청 경로가 화이트리스트인지 확인
+    // 요청 경로가 화이트리스트에 포함돼 있는지 확인
     private static boolean isWhiteListed(HttpServletRequest request) {
         for (AntPathRequestMatcher whiteListedPath : WHITE_LIST) {
-            for (AntPathRequestMatcher blackListedPath : BLACK_LIST) {
-                if (whiteListedPath.matches(request) && !blackListedPath.matches(request)) {
-                    return true;
-                }
+            if (whiteListedPath.matches(request)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 요청 경로가 블랙리스트에 포함돼 있는지 확인
+    private static boolean isBlacklisted(HttpServletRequest request) {
+        for (AntPathRequestMatcher blackListedPath : BLACK_LIST) {
+            if (blackListedPath.matches(request)) {
+                return true;
             }
         }
         return false;
@@ -99,16 +117,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void authenticate(HttpServletRequest request) {
         String token = this.getTokenFromRequest(request);
 
-        // 블랙리스트 확인
-        if (jwtProvider.isBlacklisted(token)) {
-            log.warn("블랙리스트에 등록된 토큰입니다: {}", token);
-            throw new BadValueException(ExceptionType.BLACKLISTED_TOKEN);
-        }
-
         // 토큰 검증
         if (!jwtProvider.validateToken(token)) {
             log.warn("유효하지 않은 토큰입니다.");
             throw new BadValueException(ExceptionType.INVALID_TOKEN);
+        }
+
+        // 관리자 권한 확인
+        if (request.getRequestURI().startsWith("/api/admins") && !jwtProvider.hasRole(token, "ADMIN")) {
+            log.warn("관리자 권한이 없는 사용자 접근: {}", request.getRequestURI());
+            throw new ForbiddenException(ExceptionType.FORBIDDEN_ACTION);
         }
 
         // 사용자 인증 처리
@@ -124,12 +142,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String headerPrefix = "Bearer ";
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix)) {
-            String token = bearerToken.substring(headerPrefix.length()).trim();
-            log.debug("추출된 JWT 토큰: {}", token.substring(0, 10) + "..."); // 일부만 로깅
-            return token;
+            return bearerToken.substring(headerPrefix.length()).trim();
         }
 
-        log.warn("유효하지 않은 Authorization header: {}", bearerToken);
         throw new BadValueException(ExceptionType.MISSING_BEARER_TOKEN);
     }
 

@@ -48,6 +48,11 @@ public class AdminService {
 
         try {
             Role role = Role.valueOf(newRole.toUpperCase());
+
+            if (user.getRole() == role) {
+                throw new BadValueException(ExceptionType.ALREADY_SAME_ROLE);
+            }
+
             user.changeRole(role);
         } catch (IllegalArgumentException e) {
             throw new BadValueException(ExceptionType.INVALID_USER_ROLE);
