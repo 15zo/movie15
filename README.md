@@ -100,7 +100,12 @@
 
 - **좌석 종류 및 등급**  
     - **노란색**: VIP 좌석  
-    - **하늘색**: 일반 좌석  
+    - **하늘색**: 일반 좌석
+    - <img src="https://github.com/user-attachments/assets/d732cfb6-7d63-45b8-bbeb-8f4b80fe9175" width="300" height="300"/>
+    - <img src="https://github.com/user-attachments/assets/607d226d-b286-4e67-988e-776f13bac84c" width="300" height="300"/>
+    - <img src="https://github.com/user-attachments/assets/ec6ee751-e5d6-4f33-849f-b841e8a2fb5f" width="300" height="300"/>
+    - <img src="https://github.com/user-attachments/assets/1828f8d7-3ea6-4d2e-a26a-7d3085ff4f66" width="300" height="300"/>
+    - <img src="https://github.com/user-attachments/assets/b7931823-8887-480d-84cb-346f31726d6e" width="300" height="300"/>
 
 </div>
 </details>
@@ -134,7 +139,7 @@
 
 - **결제 API**  
     - Toss 결제 흐름도  
-    - ![[payment-widget-flow2.png]]  
+    - <img src="https://github.com/user-attachments/assets/3a3c98fe-389e-4b3a-bc7a-b41cbe5cfb6c" width="300" height="300"/>
 - **결제 요청, 내역 확인, 취소 가능**  
 
 </div>
